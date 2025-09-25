@@ -1,57 +1,84 @@
 const express = require('express');
 const router = express.Router();
 const db = require('../config/database');
-const authenticateToken = require('../middleware/auth');
+const { protect } = require('../middleware/auth');
 
-// GET /api/dashboard/stats
-// يجلب إحصائيات سريعة بناءً على دور المستخدم
-router.get('/stats', authenticateToken, async (req, res) => {
+// GET /api/dashboard - Get dashboard data including user info and stats
+router.get('/', protect, async (req, res) => {
     try {
         const userId = req.user.id;
         const userRole = req.user.role;
+        const userFullName = req.user.full_name;
 
-        let responseData = {
-            role: userRole,
-            stats: {}
+        // Get user information
+        const user = {
+            id: userId,
+            full_name: userFullName,
+            role: userRole
         };
 
-        // إحصائيات مشتركة
+        // Get basic stats
         const [totalUsers] = await db.query('SELECT COUNT(*) as count FROM users');
         const [totalEvents] = await db.query('SELECT COUNT(*) as count FROM events');
+        const [totalArticles] = await db.query('SELECT COUNT(*) as count FROM news_articles WHERE status = "published"');
         
-        // تخصيص الإحصائيات بناءً على الدور
+        let stats = [];
+        
+        // Role-specific stats
         if (userRole === 'super_admin' || userRole === 'admin') {
             const [pendingComplaints] = await db.query("SELECT COUNT(*) as count FROM complaints WHERE status = 'received'");
-            responseData.stats = {
-                totalUsers: totalUsers[0].count,
-                totalEvents: totalEvents[0].count,
-                pendingComplaints: pendingComplaints[0].count,
-            };
+            const [activeSurveys] = await db.query("SELECT COUNT(*) as count FROM surveys WHERE status = 'active'");
+            
+            stats = [
+                { icon: 'fa-users', title: 'إجمالي المستخدمين', value: totalUsers[0].count },
+                { icon: 'fa-calendar-alt', title: 'الفعاليات', value: totalEvents[0].count },
+                { icon: 'fa-newspaper', title: 'المقالات المنشورة', value: totalArticles[0].count },
+                { icon: 'fa-gavel', title: 'الشكاوى المعلقة', value: pendingComplaints[0].count },
+                { icon: 'fa-poll', title: 'الاستطلاعات النشطة', value: activeSurveys[0].count }
+            ];
         } else if (userRole === 'editor') {
-             const [myArticles] = await db.query('SELECT COUNT(*) as count FROM news_articles WHERE author_id = ?', [userId]);
-             responseData.stats = {
-                myArticles: myArticles[0].count,
-                totalEvents: totalEvents[0].count,
-             };
+            const [myArticles] = await db.query('SELECT COUNT(*) as count FROM news_articles WHERE author_id = ?', [userId]);
+            const [myDrafts] = await db.query('SELECT COUNT(*) as count FROM news_articles WHERE author_id = ? AND status = "draft"', [userId]);
+            
+            stats = [
+                { icon: 'fa-newspaper', title: 'مقالاتي', value: myArticles[0].count },
+                { icon: 'fa-file-alt', title: 'المسودات', value: myDrafts[0].count },
+                { icon: 'fa-calendar-alt', title: 'الفعاليات', value: totalEvents[0].count }
+            ];
         } else if (userRole === 'manager') {
             const [activeSurveys] = await db.query("SELECT COUNT(*) as count FROM surveys WHERE status = 'active'");
-            responseData.stats = {
-                activeSurveys: activeSurveys[0].count,
-                totalUsers: totalUsers[0].count,
-            };
+            const [totalSubmissions] = await db.query("SELECT COUNT(*) as count FROM survey_submissions");
+            
+            stats = [
+                { icon: 'fa-poll', title: 'الاستطلاعات النشطة', value: activeSurveys[0].count },
+                { icon: 'fa-chart-line', title: 'إجمالي المشاركات', value: totalSubmissions[0].count },
+                { icon: 'fa-users', title: 'المستخدمون', value: totalUsers[0].count }
+            ];
         } else if (userRole === 'moderator') {
-             const [reportedComments] = await db.query("SELECT COUNT(*) as count FROM comments WHERE status = 'reported'");
-             responseData.stats = {
-                reportedComments: reportedComments[0].count,
-                totalUsers: totalUsers[0].count,
-             };
+            const [pendingComplaints] = await db.query("SELECT COUNT(*) as count FROM complaints WHERE status IN ('received', 'under_review')");
+            
+            stats = [
+                { icon: 'fa-gavel', title: 'الشكاوى المعلقة', value: pendingComplaints[0].count },
+                { icon: 'fa-users', title: 'المستخدمون', value: totalUsers[0].count },
+                { icon: 'fa-calendar-alt', title: 'الفعاليات', value: totalEvents[0].count }
+            ];
+        } else {
+            // Default stats for other roles
+            stats = [
+                { icon: 'fa-users', title: 'المستخدمون', value: totalUsers[0].count },
+                { icon: 'fa-calendar-alt', title: 'الفعاليات', value: totalEvents[0].count },
+                { icon: 'fa-newspaper', title: 'المقالات', value: totalArticles[0].count }
+            ];
         }
         
-        res.json(responseData);
+        res.json({
+            user,
+            stats
+        });
 
     } catch (error) {
         console.error("Error fetching dashboard stats:", error);
-        res.status(500).json({ message: 'خطأ في الخادم' });
+        res.status(500).json({ message: 'Server error' });
     }
 });
 

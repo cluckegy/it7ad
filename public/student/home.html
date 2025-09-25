@@ -1,0 +1,994 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>الرئيسية - بوابة اتحاد الطلاب</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css">
+    <link rel="stylesheet" href="https://unpkg.com/swiper/swiper-bundle.min.css" />
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary-color: #2563eb;
+            --primary-dark: #1d4ed8;
+            --primary-light: #3b82f6;
+            --secondary-color: #64748b;
+            --success-color: #10b981;
+            --warning-color: #f59e0b;
+            --danger-color: #ef4444;
+            --info-color: #06b6d4;
+            
+            --body-bg: #f8fafc;
+            --card-bg: #ffffff;
+            --card-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+            --card-shadow-hover: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+            
+            --text-primary: #1e293b;
+            --text-secondary: #64748b;
+            --text-light: #94a3b8;
+            --border-color: #e2e8f0;
+            --footer-bg: #1e293b;
+            --footer-text: #94a3b8;
+            
+            --gradient-primary: linear-gradient(135deg, var(--primary-color) 0%, var(--primary-light) 100%);
+            --gradient-hero: linear-gradient(135deg, rgba(37, 99, 235, 0.9) 0%, rgba(59, 130, 246, 0.8) 100%);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Cairo', sans-serif;
+            background-color: var(--body-bg);
+            color: var(--text-primary);
+            line-height: 1.6;
+            padding-top: 80px;
+        }
+
+        /* Enhanced Navbar */
+        .navbar {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+            padding: 0 2rem;
+            height: 80px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            position: fixed;
+            top: 0;
+            right: 0;
+            left: 0;
+            z-index: 1000;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .navbar-brand {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .navbar-logo {
+            width: 50px;
+            height: 50px;
+            border-radius: 12px;
+            background: var(--gradient-primary);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 1.25rem;
+            box-shadow: 0 4px 12px rgba(37, 99, 235, 0.3);
+        }
+
+        .navbar-title {
+            font-size: 1.25rem;
+            font-weight: 700;
+            color: var(--text-primary);
+        }
+
+        .navbar-links {
+            display: flex;
+            list-style: none;
+            margin: 0;
+            padding: 0;
+            gap: 2rem;
+        }
+
+        .navbar-links a {
+            text-decoration: none;
+            color: var(--text-primary);
+            font-weight: 600;
+            font-size: 1rem;
+            padding: 0.5rem 1rem;
+            border-radius: 8px;
+            transition: all 0.3s ease;
+            position: relative;
+        }
+
+        .navbar-links a::before {
+            content: '';
+            position: absolute;
+            bottom: -2px;
+            right: 50%;
+            width: 0;
+            height: 2px;
+            background: var(--gradient-primary);
+            transition: all 0.3s ease;
+            transform: translateX(50%);
+        }
+
+        .navbar-links a:hover::before {
+            width: 100%;
+        }
+
+        .navbar-links a:hover {
+            color: var(--primary-color);
+            background: rgba(37, 99, 235, 0.05);
+        }
+
+        .navbar-profile {
+            position: relative;
+        }
+
+        .navbar-profile-btn {
+            background: none;
+            border: none;
+            cursor: pointer;
+            padding: 0;
+            border-radius: 12px;
+            transition: all 0.3s ease;
+        }
+
+        .navbar-profile-btn:hover {
+            transform: scale(1.05);
+        }
+
+        .navbar-profile-img {
+            width: 45px;
+            height: 45px;
+            border-radius: 12px;
+            object-fit: cover;
+            border: 2px solid var(--border-color);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        }
+
+        .profile-dropdown {
+            display: none;
+            position: absolute;
+            left: 0;
+            top: calc(100% + 15px);
+            background: var(--card-bg);
+            border-radius: 12px;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.15);
+            list-style: none;
+            padding: 0.5rem 0;
+            margin: 0;
+            width: 220px;
+            z-index: 1001;
+            border: 1px solid var(--border-color);
+        }
+
+        .profile-dropdown.show {
+            display: block;
+            animation: fadeInDown 0.3s ease;
+        }
+
+        .profile-dropdown a {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            padding: 0.75rem 1rem;
+            text-decoration: none;
+            color: var(--text-primary);
+            font-size: 0.95rem;
+            font-weight: 500;
+            transition: all 0.3s ease;
+        }
+
+        .profile-dropdown a:hover {
+            background: rgba(37, 99, 235, 0.05);
+            color: var(--primary-color);
+        }
+
+        .profile-dropdown .divider {
+            height: 1px;
+            background: var(--border-color);
+            margin: 0.5rem 0;
+        }
+
+        /* Enhanced Hero Section */
+        .welcome-banner {
+            background: var(--gradient-hero), url('https://lh3.googleusercontent.com/gps-cs-s/AC9h4noGTCvoszKUhcpaaAUDOfOtEBQZIPvJmH70eo7_ZmOmTxA0NVr4CQ0G3mNOUQqfn5BwXYkH_OZaMSZBXgP8FhIkvF-qLYAfOPH2iIggXc_FGO5Bq6IKNwzqp7p0p5VJ-fCfUqylRg=s680-w680-h510-rw') center/cover no-repeat;
+            color: white;
+            padding: 6rem 2rem;
+            text-align: center;
+            border-radius: 20px;
+            margin: 2rem auto;
+            max-width: 1200px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .welcome-banner::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(37, 99, 235, 0.1);
+            backdrop-filter: blur(1px);
+        }
+
+        .welcome-banner-content {
+            position: relative;
+            z-index: 2;
+        }
+
+        .welcome-banner h1 {
+            margin: 0 0 1rem 0;
+            font-size: 3rem;
+            font-weight: 800;
+            text-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+        }
+
+        .welcome-banner p {
+            font-size: 1.25rem;
+            opacity: 0.95;
+            font-weight: 500;
+            text-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
+        }
+
+        /* Container */
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 2rem;
+        }
+
+        /* Section Titles */
+        .section-title {
+            font-size: 2.5rem;
+            font-weight: 800;
+            margin-bottom: 2rem;
+            color: var(--text-primary);
+            text-align: center;
+            position: relative;
+        }
+
+        .section-title::after {
+            content: '';
+            position: absolute;
+            bottom: -10px;
+            right: 50%;
+            width: 80px;
+            height: 4px;
+            background: var(--gradient-primary);
+            border-radius: 2px;
+            transform: translateX(50%);
+        }
+
+        /* Enhanced Swiper Styles */
+        .swiper-container {
+            width: 100%;
+            padding: 2rem 0;
+            margin-bottom: 3rem;
+        }
+
+        .swiper-slide {
+            height: auto;
+        }
+
+        .swiper-button-next,
+        .swiper-button-prev {
+            color: var(--primary-color);
+            background: var(--card-bg);
+            border-radius: 50%;
+            width: 50px;
+            height: 50px;
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
+            border: 1px solid var(--border-color);
+            transition: all 0.3s ease;
+        }
+
+        .swiper-button-next:hover,
+        .swiper-button-prev:hover {
+            background: var(--primary-color);
+            color: white;
+            transform: scale(1.1);
+        }
+
+        .swiper-button-next:after,
+        .swiper-button-prev:after {
+            font-size: 1.2rem;
+            font-weight: bold;
+        }
+
+        /* Enhanced Card Styles */
+        .card {
+            background: var(--card-bg);
+            border-radius: 16px;
+            box-shadow: var(--card-shadow);
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            transition: all 0.3s ease;
+            height: 100%;
+            border: 1px solid var(--border-color);
+        }
+
+        .card:hover {
+            transform: translateY(-8px);
+            box-shadow: var(--card-shadow-hover);
+        }
+
+        /* News Card Styles */
+        .news-card a {
+            text-decoration: none;
+            color: inherit;
+            display: flex;
+            flex-direction: column;
+            height: 100%;
+        }
+
+        .news-card-img {
+            width: 100%;
+            height: 220px;
+            object-fit: cover;
+            transition: transform 0.3s ease;
+        }
+
+        .news-card:hover .news-card-img {
+            transform: scale(1.05);
+        }
+
+        .news-card-body {
+            padding: 1.5rem;
+            flex-grow: 1;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .news-card-title {
+            margin: 0 0 1rem 0;
+            font-size: 1.25rem;
+            font-weight: 700;
+            line-height: 1.4;
+            color: var(--text-primary);
+        }
+
+        .news-card-date {
+            font-size: 0.875rem;
+            color: var(--text-secondary);
+            font-weight: 500;
+            margin-top: auto;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        /* Feed Card Styles */
+        .card-header {
+            padding: 1.25rem 1.5rem;
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            border-bottom: 1px solid var(--border-color);
+            background: rgba(37, 99, 235, 0.02);
+        }
+
+        .card-icon {
+            width: 40px;
+            height: 40px;
+            border-radius: 10px;
+            background: var(--gradient-primary);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 1rem;
+        }
+
+        .card-type {
+            font-weight: 700;
+            color: var(--primary-color);
+            font-size: 0.875rem;
+        }
+
+        .card-body {
+            padding: 1.5rem;
+            flex-grow: 1;
+        }
+
+        .card-title {
+            margin: 0 0 1rem 0;
+            font-size: 1.25rem;
+            font-weight: 700;
+            color: var(--text-primary);
+        }
+
+        .card-description {
+            color: var(--text-secondary);
+            font-size: 1rem;
+            line-height: 1.6;
+        }
+
+        .card-footer {
+            padding: 1rem 1.5rem;
+            background: rgba(248, 250, 252, 0.8);
+            border-top: 1px solid var(--border-color);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 0.875rem;
+            color: var(--text-secondary);
+        }
+
+        .card-action-btn {
+            background: var(--gradient-primary);
+            color: white;
+            text-decoration: none;
+            padding: 0.5rem 1.25rem;
+            border-radius: 8px;
+            font-weight: 600;
+            font-size: 0.875rem;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 12px rgba(37, 99, 235, 0.3);
+        }
+
+        .card-action-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(37, 99, 235, 0.4);
+        }
+
+        /* About Section */
+        .about-section {
+            background: var(--card-bg);
+            text-align: center;
+            padding: 4rem 2rem;
+            border-radius: 20px;
+            margin: 3rem auto;
+            box-shadow: var(--card-shadow);
+            border: 1px solid var(--border-color);
+        }
+
+        .about-section h2 {
+            margin-top: 0;
+            font-size: 2.5rem;
+            font-weight: 800;
+            color: var(--text-primary);
+            margin-bottom: 1rem;
+        }
+
+        .about-section p {
+            font-size: 1.25rem;
+            color: var(--text-secondary);
+            font-weight: 500;
+        }
+
+        /* Enhanced Footer */
+        .site-footer {
+            background: var(--footer-bg);
+            color: var(--footer-text);
+            padding: 3rem 0 2rem;
+            font-size: 0.95rem;
+            margin-top: 4rem;
+        }
+
+        .footer-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 2rem;
+            margin-bottom: 2rem;
+        }
+
+        .footer-section h4 {
+            color: white;
+            margin-bottom: 1rem;
+            font-size: 1.25rem;
+            font-weight: 700;
+        }
+
+        .footer-section p,
+        .footer-section a {
+            color: var(--footer-text);
+            text-decoration: none;
+            line-height: 1.6;
+        }
+
+        .footer-section a:hover {
+            color: white;
+        }
+
+        .social-links a {
+            font-size: 1.5rem;
+            margin-left: 1rem;
+            display: inline-block;
+            transition: all 0.3s ease;
+            color: var(--footer-text);
+        }
+
+        .social-links a:hover {
+            color: var(--primary-light);
+            transform: translateY(-2px);
+        }
+
+        .copyright {
+            text-align: center;
+            margin-top: 2rem;
+            padding-top: 2rem;
+            border-top: 1px solid #374151;
+            color: var(--footer-text);
+        }
+
+        /* Animations */
+        @keyframes fadeInDown {
+            from {
+                opacity: 0;
+                transform: translateY(-20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .fade-in-up {
+            animation: fadeInUp 0.6s ease-out;
+        }
+
+        /* Responsive Design */
+        @media (max-width: 1024px) {
+            .navbar-links {
+                display: none;
+            }
+            
+            .welcome-banner h1 {
+                font-size: 2.5rem;
+            }
+            
+            .section-title {
+                font-size: 2rem;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .container {
+                padding: 0 1rem;
+            }
+            
+            .navbar {
+                padding: 0 1rem;
+            }
+            
+            .welcome-banner {
+                padding: 4rem 1rem;
+                margin: 1rem;
+            }
+            
+            .welcome-banner h1 {
+                font-size: 2rem;
+            }
+            
+            .welcome-banner p {
+                font-size: 1rem;
+            }
+        }
+
+        /* Loading States */
+        .loading {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 3rem;
+            color: var(--text-secondary);
+        }
+
+        .spinner {
+            width: 40px;
+            height: 40px;
+            border: 4px solid var(--border-color);
+            border-top: 4px solid var(--primary-color);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body>
+    <header id="navbar-container"></header>
+    
+    <main class="container">
+        <div class="welcome-banner fade-in-up">
+            <div class="welcome-banner-content">
+                <h1>مرحباً بك في بوابة اتحاد الطلاب</h1>
+                <p>مكانك الأول لمتابعة كل جديد في الكلية والمشاركة في الأنشطة الطلابية</p>
+            </div>
+        </div>
+
+        <section class="fade-in-up">
+            <h2 class="section-title">آخر أخبار الكلية</h2>
+            <div class="swiper-container" id="news-swiper">
+                <div class="swiper-wrapper" id="news-container">
+                    <div class="swiper-slide">
+                        <div class="loading">
+                            <div class="spinner"></div>
+                        </div>
+                    </div>
+                </div>
+                <div class="swiper-button-next"></div>
+                <div class="swiper-button-prev"></div>
+            </div>
+        </section>
+
+        <section class="fade-in-up">
+            <h2 class="section-title">آخر مستجدات الاتحاد</h2>
+            <div class="swiper-container" id="feed-swiper">
+                <div class="swiper-wrapper" id="feed-container">
+                    <div class="swiper-slide">
+                        <div class="loading">
+                            <div class="spinner"></div>
+                        </div>
+                    </div>
+                </div>
+                <div class="swiper-button-next"></div>
+                <div class="swiper-button-prev"></div>
+            </div>
+        </section>
+        
+        <div class="about-section fade-in-up">
+            <h2>عن اتحاد الطلاب</h2>
+            <p>نسعى لخدمة الطلاب وتوفير بيئة جامعية محفزة وداعمة لتحقيق أهدافهم الأكاديمية والشخصية</p>
+        </div>
+    </main>
+    
+    <footer id="footer-container"></footer>
+
+    <script src="https://unpkg.com/swiper/swiper-bundle.min.js"></script>
+    <script>
+        const token = localStorage.getItem('authToken');
+
+        document.addEventListener('DOMContentLoaded', () => {
+            if (!token) { 
+                window.location.href = '/login'; 
+                return; 
+            }
+            loadNavbar();
+            loadFooter();
+            loadCollegeNews();
+            loadFeed();
+        });
+
+        async function loadCollegeNews() {
+            try {
+                const res = await fetch('/api/home/college-news', { 
+                    headers: { 'Authorization': `Bearer ${token}` } 
+                });
+                
+                if (!res.ok) throw new Error('Failed to load college news');
+                
+                const { news } = await res.json();
+                const newsContainer = document.getElementById('news-container');
+                
+                newsContainer.innerHTML = '';
+                
+                if (news.length === 0) {
+                    newsContainer.innerHTML = `
+                        <div class="swiper-slide">
+                            <div class="card">
+                                <div class="card-body" style="text-align: center; padding: 3rem;">
+                                    <i class="fas fa-newspaper" style="font-size: 3rem; color: var(--text-light); margin-bottom: 1rem;"></i>
+                                    <p style="color: var(--text-secondary);">لا توجد أخبار حالياً من موقع الكلية</p>
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                } else {
+                    news.forEach(item => {
+                        const slide = document.createElement('div');
+                        slide.className = 'swiper-slide';
+                        slide.innerHTML = `
+                            <div class="card news-card">
+                                <a href="${item.link}" target="_blank" rel="noopener noreferrer">
+                                    <img src="${item.image}" alt="${item.title}" class="news-card-img" loading="lazy">
+                                    <div class="news-card-body">
+                                        <h3 class="news-card-title">${item.title}</h3>
+                                        <p class="news-card-date">
+                                            <i class="fas fa-calendar-alt"></i>
+                                            ${item.date}
+                                        </p>
+                                    </div>
+                                </a>
+                            </div>
+                        `;
+                        newsContainer.appendChild(slide);
+                    });
+                }
+
+                // Initialize Swiper
+                new Swiper('#news-swiper', {
+                    loop: news.length > 3,
+                    slidesPerView: 1,
+                    spaceBetween: 20,
+                    navigation: {
+                        nextEl: '#news-swiper .swiper-button-next',
+                        prevEl: '#news-swiper .swiper-button-prev',
+                    },
+                    breakpoints: {
+                        640: { slidesPerView: 2, spaceBetween: 20 },
+                        1024: { slidesPerView: 3, spaceBetween: 30 },
+                    },
+                    autoplay: {
+                        delay: 5000,
+                        disableOnInteraction: false,
+                    }
+                });
+
+            } catch (error) {
+                console.error('Error loading college news:', error);
+                document.getElementById('news-container').innerHTML = `
+                    <div class="swiper-slide">
+                        <div class="card">
+                            <div class="card-body" style="text-align: center; padding: 3rem;">
+                                <i class="fas fa-exclamation-triangle" style="font-size: 3rem; color: var(--warning-color); margin-bottom: 1rem;"></i>
+                                <p style="color: var(--text-secondary);">حدث خطأ أثناء جلب أخبار الكلية</p>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }
+        }
+
+        async function loadFeed() {
+            try {
+                const res = await fetch('/api/home/feed', { 
+                    headers: { 'Authorization': `Bearer ${token}` } 
+                });
+                
+                if (!res.ok) throw new Error('Failed to load feed');
+                
+                const { feed } = await res.json();
+                const feedContainer = document.getElementById('feed-container');
+                
+                feedContainer.innerHTML = '';
+                
+                if (feed.length === 0) {
+                    feedContainer.innerHTML = `
+                        <div class="swiper-slide">
+                            <div class="card">
+                                <div class="card-body" style="text-align: center; padding: 3rem;">
+                                    <i class="fas fa-rss" style="font-size: 3rem; color: var(--text-light); margin-bottom: 1rem;"></i>
+                                    <p style="color: var(--text-secondary);">لا توجد مستجدات حالياً</p>
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                } else {
+                    feed.forEach(item => {
+                        const slide = document.createElement('div');
+                        slide.className = 'swiper-slide';
+                        slide.innerHTML = `<div class="card">${getCardHTML(item)}</div>`;
+                        feedContainer.appendChild(slide);
+                    });
+                }
+
+                // Initialize Swiper
+                new Swiper('#feed-swiper', {
+                    loop: feed.length > 3,
+                    slidesPerView: 1,
+                    spaceBetween: 20,
+                    navigation: {
+                        nextEl: '#feed-swiper .swiper-button-next',
+                        prevEl: '#feed-swiper .swiper-button-prev',
+                    },
+                    breakpoints: {
+                        640: { slidesPerView: 2, spaceBetween: 20 },
+                        1024: { slidesPerView: 3, spaceBetween: 30 },
+                    },
+                    autoplay: {
+                        delay: 6000,
+                        disableOnInteraction: false,
+                    }
+                });
+                
+            } catch (error) {
+                console.error('Error loading union feed:', error);
+                document.getElementById('feed-container').innerHTML = `
+                    <div class="swiper-slide">
+                        <div class="card">
+                            <div class="card-body" style="text-align: center; padding: 3rem;">
+                                <i class="fas fa-exclamation-triangle" style="font-size: 3rem; color: var(--warning-color); margin-bottom: 1rem;"></i>
+                                <p style="color: var(--text-secondary);">حدث خطأ أثناء جلب المستجدات</p>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }
+        }
+
+        function getCardHTML(item) {
+            const cardConfigs = {
+                event: {
+                    icon: 'fas fa-calendar-check',
+                    type: 'فعالية قادمة',
+                    footer: `تبدأ في: ${new Date(item.start_time).toLocaleDateString('ar-EG')}`,
+                    action: { text: 'التفاصيل', href: `/student/events.html#event-${item.id}` }
+                },
+                survey: {
+                    icon: 'fas fa-poll',
+                    type: 'استطلاع جديد',
+                    footer: 'متاح الآن',
+                    action: { text: 'شارك الآن', href: `/student/surveys.html#survey-${item.id}` }
+                },
+                file: {
+                    icon: 'fas fa-file-alt',
+                    type: 'ملف جديد',
+                    footer: `نوع الملف: ${item.file_type}`,
+                    action: { text: 'تحميل', href: `/api/files/download/${item.id}`, download: true }
+                }
+            };
+
+            const config = cardConfigs[item.type];
+            if (!config) return '';
+
+            return `
+                <div class="card-header">
+                    <div class="card-icon">
+                        <i class="${config.icon}"></i>
+                    </div>
+                    <span class="card-type">${config.type}</span>
+                </div>
+                <div class="card-body">
+                    <h3 class="card-title">${item.title || item.file_name}</h3>
+                    <p class="card-description">${(item.description || 'تم رفع ملف جديد يمكنك تحميله الآن.').substring(0, 100)}...</p>
+                </div>
+                <div class="card-footer">
+                    <span><i class="fas fa-clock"></i> ${config.footer}</span>
+                    <a href="${config.action.href}" class="card-action-btn" ${config.action.download ? 'download' : ''}>
+                        ${config.action.text}
+                    </a>
+                </div>
+            `;
+        }
+
+        function loadFooter() {
+            document.getElementById('footer-container').innerHTML = `
+                <div class="site-footer">
+                    <div class="container">
+                        <div class="footer-grid">
+                            <div class="footer-section">
+                                <h4>اتحاد طلاب التربية النوعية</h4>
+                                <p>نسعى لخدمة الطلاب وتوفير بيئة جامعية محفزة وداعمة لتحقيق أهدافهم الأكاديمية والشخصية.</p>
+                            </div>
+                            <div class="footer-section">
+                                <h4>تابعنا على</h4>
+                                <div class="social-links">
+                                    <a href="#" target="_blank" aria-label="Facebook"><i class="fab fa-facebook-square"></i></a>
+                                    <a href="#" target="_blank" aria-label="Instagram"><i class="fab fa-instagram"></i></a>
+                                    <a href="#" target="_blank" aria-label="YouTube"><i class="fab fa-youtube"></i></a>
+                                    <a href="#" target="_blank" aria-label="Twitter"><i class="fab fa-twitter"></i></a>
+                                </div>
+                            </div>
+                            <div class="footer-section">
+                                <h4>تطوير بواسطة</h4>
+                                <p>Mohamed Wael</p>
+                                <div class="social-links">
+                                    <a href="https://github.com/mwael-01" target="_blank" aria-label="GitHub"><i class="fab fa-github"></i></a>
+                                    <a href="https://www.linkedin.com/in/mohamed-wael-922a73229/" target="_blank" aria-label="LinkedIn"><i class="fab fa-linkedin"></i></a>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="copyright">
+                            &copy; ${new Date().getFullYear()} اتحاد طلاب كلية التربية النوعية. جميع الحقوق محفوظة.
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+        
+        async function loadNavbar() {
+            const navbarContainer = document.getElementById('navbar-container');
+            try {
+                const res = await fetch('/api/profile/me', { 
+                    headers: { 'Authorization': `Bearer ${token}` } 
+                });
+                
+                if (!res.ok) { 
+                    logout(); 
+                    return; 
+                }
+                
+                const { user } = await res.json();
+                const adminRoles = ['super_admin', 'admin', 'moderator', 'editor', 'manager'];
+                const isAdmin = adminRoles.includes(user.role);
+                
+                let dropdownHTML = `
+                    <li><a href="/profile.html"><i class="fas fa-user-circle"></i> الملف الشخصي</a></li>
+                `;
+                
+                if (isAdmin) { 
+                    dropdownHTML += `
+                        <li><a href="/dashboard.html"><i class="fas fa-tachometer-alt"></i> لوحة التحكم</a></li>
+                    `; 
+                }
+                
+                dropdownHTML += `
+                    <li class="divider"></li>
+                    <li><a href="#" id="logout-btn"><i class="fas fa-sign-out-alt"></i> تسجيل الخروج</a></li>
+                `;
+                
+                navbarContainer.innerHTML = `
+                    <nav class="navbar">
+                        <div class="navbar-brand">
+                            <div class="navbar-logo">
+                                <i class="fas fa-graduation-cap"></i>
+                            </div>
+                            <div class="navbar-title">اتحاد الطلاب</div>
+                        </div>
+                        <ul class="navbar-links">
+                            <li><a href="/student/home.html">الرئيسية</a></li>
+                            <li><a href="/student/news.html">الأخبار</a></li>
+                            <li><a href="/student/events.html">الفعاليات</a></li>
+                            <li><a href="/student/surveys.html">الاستطلاعات</a></li>
+                            <li><a href="/student/complaints.html">الشكاوى</a></li>
+                        </ul>
+                        <div class="navbar-profile">
+                            <button class="navbar-profile-btn" id="profile-btn">
+                                <img src="${user.profile_image_url || '/uploads/avatars/default.png'}" alt="Profile" class="navbar-profile-img">
+                            </button>
+                            <ul class="profile-dropdown" id="profile-dropdown">
+                                ${dropdownHTML}
+                            </ul>
+                        </div>
+                    </nav>
+                `;
+                
+                const profileBtn = document.getElementById('profile-btn');
+                const profileDropdown = document.getElementById('profile-dropdown');
+                
+                profileBtn.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    profileDropdown.classList.toggle('show');
+                });
+                
+                document.getElementById('logout-btn').addEventListener('click', logout);
+
+                window.addEventListener('click', (e) => { 
+                    if (!profileBtn.contains(e.target) && !profileDropdown.contains(e.target)) {
+                        profileDropdown.classList.remove('show');
+                    }
+                });
+                
+            } catch (err) { 
+                console.error('Error loading navbar:', err);
+                logout(); 
+            }
+        }
+        
+        function logout() { 
+            localStorage.removeItem('authToken'); 
+            window.location.href = '/login'; 
+        }
+    </script>
+</body>
+</html>

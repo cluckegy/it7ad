@@ -1,0 +1,269 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>الشكاوى والمقترحات - بوابة اتحاد الطلاب</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700&display=swap');
+        :root {
+            --primary-color: #0056b3; --body-bg: #f4f7f6; --card-bg: #ffffff;
+            --text-color: #333; --border-color: #dee2e6; --footer-bg: #212529; --footer-text: #adb5bd;
+            --danger: #dc3545; --success: #28a745;
+        }
+        /* --- General Styles --- */
+        body { font-family: 'Cairo', sans-serif; background-color: var(--body-bg); margin: 0; padding-top: 70px; display: flex; flex-direction: column; min-height: 100vh; }
+        .container { max-width: 1200px; margin: 0 auto; padding: 20px; flex-grow: 1; }
+
+        /* --- Navbar Styles (Full Code) --- */
+        .navbar {
+            background-color: #fff;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            padding: 0 2rem;
+            height: 70px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            position: fixed;
+            top: 0;
+            right: 0;
+            left: 0;
+            z-index: 1000;
+        }
+        .navbar-brand { display: flex; align-items: center; }
+        .navbar-brand img { height: 50px; margin-left: 10px; }
+        .navbar-links { display: flex; list-style: none; margin: 0; padding: 0; gap: 25px; }
+        .navbar-links a { text-decoration: none; color: var(--text-color); font-weight: 600; font-size: 1rem; position: relative; padding: 5px 0; }
+        .navbar-links a::after { content: ''; position: absolute; bottom: 0; right: 0; width: 0; height: 2px; background-color: var(--primary-color); transition: width 0.3s ease; }
+        .navbar-links a:hover::after { width: 100%; }
+        .navbar-profile { position: relative; }
+        .navbar-profile-btn { background: none; border: none; cursor: pointer; padding: 0; }
+        .navbar-profile-img { width: 45px; height: 45px; border-radius: 50%; object-fit: cover; border: 2px solid var(--border-color); }
+        .profile-dropdown {
+            display: none;
+            position: absolute;
+            left: 0;
+            top: calc(100% + 10px);
+            background-color: #fff;
+            border-radius: 8px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+            list-style: none;
+            padding: 10px 0;
+            margin: 0;
+            width: 220px;
+            z-index: 1001;
+        }
+        .profile-dropdown.show { display: block; }
+        .profile-dropdown a { display: flex; align-items: center; gap: 10px; padding: 10px 20px; text-decoration: none; color: #333; font-size: 0.95rem; }
+        .profile-dropdown a:hover { background-color: #f5f5f5; }
+        .profile-dropdown .divider { height: 1px; background-color: var(--border-color); margin: 8px 0; }
+
+        /* --- Footer Styles (Full Code) --- */
+        .site-footer {
+            background-color: var(--footer-bg);
+            color: var(--footer-text);
+            padding: 40px 0;
+            font-size: 0.95rem;
+            margin-top: auto; /* Pushes footer to the bottom */
+        }
+        .footer-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 30px;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 20px;
+        }
+        .footer-section h4 { color: white; margin-bottom: 15px; }
+        .footer-section p, .footer-section a { color: var(--footer-text); text-decoration: none; }
+        .footer-section a:hover { color: white; }
+        .social-links a { font-size: 1.5rem; margin-left: 15px; display: inline-block; transition: color 0.2s; }
+        .copyright { text-align: center; margin-top: 40px; padding-top: 20px; border-top: 1px solid #343a40; }
+        
+        /* --- Page Specific Layout Styles --- */
+        .contact-wrapper {
+            display: flex;
+            background-color: var(--card-bg);
+            border-radius: 10px;
+            box-shadow: 0 5px 20px rgba(0,0,0,0.1);
+            overflow: hidden;
+            max-width: 1100px;
+            width: 100%;
+            margin: 2rem auto;
+        }
+        .contact-info {
+            background-color: var(--primary-color);
+            color: white;
+            padding: 40px;
+            width: 40%;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+        }
+        .contact-info h2 { margin-top: 0; font-size: 2rem; }
+        .contact-info p { font-size: 1.1rem; line-height: 1.7; opacity: 0.9; }
+        .contact-icon { font-size: 4rem; text-align: center; margin-bottom: 20px; }
+
+        .form-container {
+            padding: 40px;
+            width: 60%;
+        }
+        .form-container h1 { margin-top: 0; }
+        .form-container .subtitle { color: #6c757d; margin-bottom: 30px; }
+        .form-group { margin-bottom: 20px; }
+        .form-group label { display: block; font-weight: 600; margin-bottom: 8px; }
+        .form-group input, .form-group select, .form-group textarea {
+            width: 100%; padding: 12px; border-radius: 5px; border: 1px solid var(--border-color);
+            box-sizing: border-box; font-family: 'Cairo', sans-serif; font-size: 1rem;
+            transition: border-color 0.2s, box-shadow 0.2s;
+        }
+        .form-group input:focus, .form-group select:focus, .form-group textarea:focus {
+            border-color: var(--primary-color); box-shadow: 0 0 0 3px rgba(0, 86, 179, 0.1); outline: none;
+        }
+        .submit-btn {
+            background-color: var(--primary-color); color: white; padding: 12px 25px; border: none; border-radius: 5px;
+            cursor: pointer; font-size: 1.1rem; font-weight: 600; width: 100%; transition: background-color 0.2s;
+        }
+        .submit-btn:hover { background-color: #004494; }
+
+        /* --- Notification Styles --- */
+        .notification { position: fixed; bottom: 20px; left: 20px; padding: 15px 25px; border-radius: 8px; color: #fff; font-weight: 600; box-shadow: 0 4px 12px rgba(0,0,0,0.2); opacity: 0; transform: translateY(100px); transition: all 0.5s cubic-bezier(0.25, 1, 0.5, 1); z-index: 2000; }
+        .notification.show { opacity: 1; transform: translateY(0); }
+        .notification.success { background-color: var(--success); }
+        .notification.error { background-color: var(--danger); }
+        
+        /* Responsive */
+        @media (max-width: 992px) {
+            .contact-wrapper { flex-direction: column; }
+            .contact-info, .form-container { width: 100%; box-sizing: border-box; }
+        }
+    </style>
+</head>
+<body>
+    <header id="navbar-container"></header>
+    <main class="container">
+        <div class="contact-wrapper">
+            <div class="contact-info">
+                <div class="contact-icon"><i class="fas fa-hands-helping"></i></div>
+                <h2>صوتك مسموع</h2>
+                <p>نحن هنا للاستماع إليك. كل رسالة تصلنا هي فرصة لنا لنتحسن ونطور من خدماتنا وبيئتنا الجامعية. لا تتردد في التواصل معنا.</p>
+            </div>
+            <div class="form-container">
+                <h1>تواصل معنا</h1>
+                <p class="subtitle">سواء كانت شكوى أو مقترحاً، نحن نرحب بمشاركتك.</p>
+                <form id="complaint-form">
+                    <div class="form-group">
+                        <label for="title">العنوان</label>
+                        <input type="text" id="title" name="title" placeholder="مثال: اقتراح بخصوص المكتبة" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="category">التصنيف</label>
+                        <select id="category" name="category" required>
+                            <option value="" disabled selected>-- اختر التصنيف --</option>
+                            <option value="academic">شكوى أكاديمية</option>
+                            <option value="services">شكوى خدمية</option>
+                            <option value="facilities">شكوى بالمرافق</option>
+                            <option value="suggestion">اقتراح</option>
+                            <option value="other">أخرى</option>
+                        </select>
+                    </div>
+                     <div class="form-group">
+                        <label for="phone_number">رقم الهاتف (اختياري)</label>
+                        <input type="tel" id="phone_number" name="phone_number" placeholder="سيتم استخدامه فقط للحالات التي تتطلب تواصل مباشر">
+                    </div>
+                    <div class="form-group">
+                        <label for="description">التفاصيل</label>
+                        <textarea id="description" name="description" rows="6" placeholder="يرجى كتابة وصف تفصيلي هنا..." required></textarea>
+                    </div>
+                    <button type="submit" class="submit-btn">إرسال</button>
+                </form>
+            </div>
+        </div>
+    </main>
+    <footer id="footer-container"></footer>
+    <div id="notification-container" class="notification"></div>
+
+    <script>
+        const token = localStorage.getItem('authToken');
+
+        document.addEventListener('DOMContentLoaded', () => {
+            if (!token) { window.location.href = '/login'; return; }
+            loadNavbar();
+            loadFooter();
+            document.getElementById('complaint-form').addEventListener('submit', handleFormSubmit);
+        });
+
+        async function handleFormSubmit(e) {
+            e.preventDefault();
+            const form = e.target;
+            const formData = new FormData(form);
+            const data = Object.fromEntries(formData.entries());
+
+            // --- VALIDATION ADDED ---
+            if (data.title.trim().length < 10) {
+                showNotification('يجب أن لا يقل العنوان عن 10 أحرف.', 'error');
+                return;
+            }
+
+            if (data.description.trim().length < 32) {
+                showNotification('يجب أن لا تقل التفاصيل عن 32 حرفًا.', 'error');
+                return;
+            }
+            // --- END OF VALIDATION ---
+
+            try {
+                const res = await fetch('/api/student/complaints', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+                    body: JSON.stringify(data)
+                });
+                const result = await res.json();
+                if (!res.ok) { throw new Error(result.message || 'An unknown error occurred.'); }
+                showNotification(result.message, 'success');
+                form.reset();
+            } catch (error) {
+                console.error('Submission Error:', error);
+                showNotification(error.message, 'error');
+            }
+        }
+        
+        let notificationTimeout;
+        function showNotification(message, type = 'success') {
+            const container = document.getElementById('notification-container');
+            container.textContent = message;
+            container.className = `notification ${type}`;
+            container.classList.add('show');
+            clearTimeout(notificationTimeout);
+            notificationTimeout = setTimeout(() => { container.classList.remove('show'); }, 5000);
+        }
+
+        function loadFooter() {
+            document.getElementById('footer-container').innerHTML = `<div class="site-footer"><div class="container footer-grid"><div class="footer-section"><h4>اتحاد طلاب التربية النوعية</h4><p>نسعى لخدمة الطلاب وتوفير بيئة جامعية محفزة وداعمة.</p></div><div class="footer-section"><h4>تابعنا على</h4><div class="social-links"><a href="#" target="_blank"><i class="fab fa-facebook-square"></i></a><a href="#" target="_blank"><i class="fab fa-instagram"></i></a><a href="#" target="_blank"><i class="fab fa-youtube"></i></a></div></div><div class="footer-section"><h4>تطوير بواسطة</h4><p>Mohamed Wael</p><div class="social-links"><a href="https://github.com/mwael-01" target="_blank"><i class="fab fa-github"></i></a><a href="https://www.linkedin.com/in/mohamed-wael-922a73229/" target="_blank"><i class="fab fa-linkedin"></i></a></div></div></div><div class="copyright">&copy; ${new Date().getFullYear()} اتحاد طلاب كلية التربية النوعية. جميع الحقوق محفوظة.</div></div>`;
+        }
+        
+        async function loadNavbar() {
+            const navbarContainer = document.getElementById('navbar-container');
+            try {
+                const res = await fetch('/api/profile/me', { headers: { 'Authorization': `Bearer ${token}` } });
+                if (!res.ok) { logout(); return; }
+                const { user } = await res.json();
+                const adminRoles = ['super_admin', 'admin', 'moderator', 'editor', 'manager'];
+                const isAdmin = adminRoles.includes(user.role);
+                let dropdownHTML = `<li><a href="/profile.html"><i class="fas fa-user-circle"></i> الملف الشخصي</a></li>`;
+                if (isAdmin) { dropdownHTML += `<li><a href="/dashboard.html"><i class="fas fa-tachometer-alt"></i> It7ad Panel</a></li>`; }
+                dropdownHTML += `<li class="divider"></li><li><a href="#" id="logout-btn"><i class="fas fa-sign-out-alt"></i> تسجيل الخروج</a></li>`;
+                navbarContainer.innerHTML = `<nav class="navbar"><div class="navbar-brand"><img src="https://moglitch.alwaysdata.net/content/uploads/photos/2025/09/it7ad_2606da4f720c447e46a6662c8f20a2a1.png" alt="Logo"></div><ul class="navbar-links"><li><a href="/student/home.html">الرئيسية</a></li><li><a href="/student/news.html">الأخبار</a></li><li><a href="/student/events.html">الفعاليات</a></li><li><a href="/student/complaints.html">الشكاوى</a></li></ul><div class="navbar-profile"><button class="navbar-profile-btn" id="profile-btn"><img src="${user.profile_image_url || '/uploads/avatars/default.png'}" alt="Profile" class="navbar-profile-img"></button><ul class="profile-dropdown" id="profile-dropdown">${dropdownHTML}</ul></div></nav>`;
+                const profileBtn = document.getElementById('profile-btn');
+                const profileDropdown = document.getElementById('profile-dropdown');
+                profileBtn.addEventListener('click', () => profileDropdown.classList.toggle('show'));
+                document.getElementById('logout-btn').addEventListener('click', logout);
+                window.addEventListener('click', (e) => { if (!profileBtn.contains(e.target) && !profileDropdown.contains(e.target)) profileDropdown.classList.remove('show'); });
+            } catch (err) { logout(); }
+        }
+
+        function logout() { localStorage.removeItem('authToken'); window.location.href = '/login'; }
+    </script>
+</body>
+</html>
+

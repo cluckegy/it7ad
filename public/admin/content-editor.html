@@ -1,0 +1,239 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>محرر المقالات - لوحة التحكم</title>
+    <link href="https://cdn.quilljs.com/1.3.6/quill.snow.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700&display=swap');
+        :root {
+            --primary-color: #0056b3; --sidebar-bg: #212529; --body-bg: #f4f7f6;
+            --card-bg: #ffffff; --text-color: #333; --light-text: #f8f9fa; --success: #28a745;
+        }
+        body { font-family: 'Cairo', sans-serif; background-color: var(--body-bg); margin: 0; display: flex; }
+        .sidebar { width: 250px; background-color: var(--sidebar-bg); color: var(--light-text); display: flex; flex-direction: column; height: 100vh; position: fixed; }
+        .sidebar-header { padding: 20px; text-align: center; border-bottom: 1px solid #444; }
+        .sidebar-nav { flex-grow: 1; list-style: none; padding: 20px 0; margin: 0; }
+        .sidebar-nav li a { display: block; padding: 15px 20px; color: var(--light-text); text-decoration: none; }
+        .sidebar-nav li a:hover, .sidebar-nav li a.active { background-color: var(--primary-color); }
+        .sidebar-nav li a i { margin-left: 10px; }
+        .main-content { margin-right: 250px; width: calc(100% - 250px); padding: 20px; }
+        .editor-container { background: var(--card-bg); padding: 20px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
+        .form-group { margin-bottom: 20px; }
+        .form-group label { display: block; font-weight: 600; margin-bottom: 8px; }
+        .form-group input[type="text"], .form-group input[type="url"], .form-group select { width: 100%; padding: 10px; border-radius: 5px; border: 1px solid #ccc; box-sizing: border-box; }
+        #editor { height: 300px; }
+        .form-actions { margin-top: 20px; text-align: left; }
+        .save-btn { background-color: var(--success); color: white; padding: 12px 25px; border: none; border-radius: 5px; cursor: pointer; font-size: 1rem; font-weight: 600; }
+        
+        /* Image Source Toggle */
+        .image-source-toggle { display: flex; border: 1px solid #ccc; border-radius: 8px; overflow: hidden; }
+        .image-source-toggle input[type="radio"] { display: none; }
+        .image-source-toggle label { flex: 1; text-align: center; padding: 10px; cursor: pointer; background-color: #f0f0f0; transition: background-color 0.3s, color 0.3s; color: #555; margin-bottom: 0; }
+        .image-source-toggle input[type="radio"]:checked + label { background-color: var(--primary-color); color: white; font-weight: 600; }
+        #featured_image_upload_container { display: none; margin-top: 10px; }
+        #featured_image_url_container { margin-top: 10px; }
+        
+        /* Attachments Area */
+        .attachments-container { border: 2px dashed #ccc; border-radius: 8px; padding: 25px; text-align: center; cursor: pointer; transition: background-color 0.3s, border-color 0.3s; }
+        .attachments-container:hover { background-color: #f9f9f9; border-color: var(--primary-color); }
+        .attachments-container .icon { font-size: 2.5rem; color: #999; margin-bottom: 10px; }
+        .attachments-container p { margin: 0; color: #555; font-weight: 600; }
+        .attachments-container input[type="file"] { display: none; }
+        #attachments-list { list-style: none; padding: 0; margin-top: 15px; }
+        #attachments-list li { background-color: #f0f0f0; padding: 8px 12px; border-radius: 4px; margin-bottom: 5px; display: flex; justify-content: space-between; align-items: center; font-size: 0.9rem;}
+        .remove-file-btn { color: #dc3545; cursor: pointer; font-size: 1.1rem; }
+        
+        /* --- NEW & IMPROVED STYLES FOR FILE INPUT --- */
+        .custom-file-upload {
+            display: inline-block;
+            padding: 8px 15px;
+            cursor: pointer;
+            background-color: #f0f0f0;
+            color: #333;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            font-weight: 600;
+            transition: background-color 0.3s;
+        }
+        .custom-file-upload:hover {
+            background-color: #e0e0e0;
+        }
+        .custom-file-upload i {
+            margin-left: 8px;
+        }
+        input[type="file"].styled-file-input {
+            display: none;
+        }
+        .file-name-display {
+            margin-right: 15px; /* RTL */
+            font-size: 0.9rem;
+            color: #555;
+            font-style: italic;
+        }
+    </style>
+</head>
+<body>
+    <aside class="sidebar" id="sidebar-container"></aside>
+    <main class="main-content">
+        <h1 id="page-title">إنشاء مقال جديد</h1>
+        <div class="editor-container">
+            <form id="article-form">
+                <div class="form-group">
+                    <label for="title">عنوان المقال</label>
+                    <input type="text" id="title" name="title" required>
+                </div>
+                
+                <div class="form-group">
+                    <label>الصورة البارزة</label>
+                    <div class="image-source-toggle">
+                        <input type="radio" id="image_type_url" name="image_type" value="url" checked>
+                        <label for="image_type_url"><i class="fas fa-link"></i> استخدام رابط</label>
+                        <input type="radio" id="image_type_upload" name="image_type" value="upload">
+                        <label for="image_type_upload"><i class="fas fa-upload"></i> رفع صورة</label>
+                    </div>
+                    <div id="featured_image_url_container">
+                        <input type="url" name="featured_image_url" placeholder="https://example.com/image.jpg">
+                    </div>
+                    <div id="featured_image_upload_container">
+                        <!-- The improved file input -->
+                        <label for="featured_image_input" class="custom-file-upload">
+                            <i class="fas fa-image"></i>
+                            اختر صورة
+                        </label>
+                        <input type="file" id="featured_image_input" name="featured_image_upload" accept="image/*" class="styled-file-input">
+                        <span id="featured-image-filename" class="file-name-display"></span>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label>المحتوى</label>
+                    <div id="editor"></div>
+                </div>
+
+                <div class="form-group">
+                    <label for="attachments">مرفقات (اختياري)</label>
+                    <label for="attachments" class="attachments-container">
+                        <div class="icon"><i class="fas fa-cloud-upload-alt"></i></div>
+                        <p>انقر هنا أو اسحب الملفات لإرفاقها</p>
+                        <input type="file" id="attachments" name="attachments" multiple accept=".pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx,image/*" class="styled-file-input">
+                    </label>
+                    <ul id="attachments-list"></ul>
+                </div>
+
+                <div class="form-group">
+                    <label for="status">الحالة</label>
+                    <select id="status" name="status">
+                        <option value="draft">مسودة</option>
+                        <option value="published">منشور</option>
+                    </select>
+                </div>
+
+                <div class="form-actions">
+                    <button type="submit" class="save-btn">حفظ المقال</button>
+                </div>
+            </form>
+        </div>
+    </main>
+
+    <script src="https://cdn.quilljs.com/1.3.6/quill.min.js"></script>
+    <script>
+        const token = localStorage.getItem('authToken');
+        const form = document.getElementById('article-form');
+        const quill = new Quill('#editor', { theme: 'snow' });
+
+        let attachedFiles = []; // To manage the list of files to be uploaded
+
+        // --- Event Listeners and UI Setup ---
+        document.addEventListener('DOMContentLoaded', () => {
+            if (!token) { window.location.href = '/login'; return; }
+            loadSidebar();
+            // Add other init logic if needed
+        });
+
+        // Image source choice logic
+        document.querySelectorAll('input[name="image_type"]').forEach(radio => {
+            radio.addEventListener('change', (e) => {
+                const isUrl = e.target.value === 'url';
+                document.getElementById('featured_image_url_container').style.display = isUrl ? 'block' : 'none';
+                document.getElementById('featured_image_upload_container').style.display = isUrl ? 'none' : 'block';
+            });
+        });
+
+        // --- NEW: Featured image file name display logic ---
+        const featuredImageInput = document.getElementById('featured_image_input');
+        const featuredImageFilename = document.getElementById('featured-image-filename');
+        featuredImageInput.addEventListener('change', () => {
+            if (featuredImageInput.files.length > 0) {
+                featuredImageFilename.textContent = featuredImageInput.files[0].name;
+            } else {
+                featuredImageFilename.textContent = '';
+            }
+        });
+
+        // Attachments logic
+        const attachmentsInput = document.getElementById('attachments');
+        attachmentsInput.addEventListener('change', () => {
+            Array.from(attachmentsInput.files).forEach(file => attachedFiles.push(file));
+            renderAttachments();
+            attachmentsInput.value = ''; // Clear input to allow re-adding same file
+        });
+        
+        function renderAttachments() {
+            const list = document.getElementById('attachments-list');
+            list.innerHTML = attachedFiles.map((file, index) => `
+                <li>
+                    <span><i class="fas fa-file-alt"></i> ${file.name}</span>
+                    <i class="fas fa-times-circle remove-file-btn" onclick="removeAttachment(${index})"></i>
+                </li>
+            `).join('');
+        }
+
+        function removeAttachment(index) {
+            attachedFiles.splice(index, 1);
+            renderAttachments();
+        }
+
+        // --- Form Submission ---
+        form.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const formData = new FormData(form);
+            formData.append('content', quill.root.innerHTML);
+            formData.delete('attachments'); 
+            attachedFiles.forEach(file => {
+                formData.append('attachments', file);
+            });
+            if (formData.get('image_type') === 'url') {
+                formData.delete('featured_image_upload');
+            } else {
+                formData.delete('featured_image_url');
+            }
+
+            try {
+                const res = await fetch('/api/content/articles', {
+                    method: 'POST',
+                    headers: { 'Authorization': `Bearer ${token}` },
+                    body: formData
+                });
+                const result = await res.json();
+                alert(result.message);
+                if (res.ok) {
+                    window.location.href = '/admin/content';
+                }
+            } catch (error) {
+                alert('An error occurred. Please try again.');
+                console.error(error);
+            }
+        });
+        
+        // --- Sidebar Loading (simplified) ---
+        async function loadSidebar() {
+            // Re-using sidebar logic from previous steps
+        }
+    </script>
+</body>
+</html>
+

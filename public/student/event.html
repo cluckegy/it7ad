@@ -1,0 +1,315 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>الفعاليات - بوابة اتحاد الطلاب</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700&display=swap');
+        :root {
+            --primary-color: #0056b3; --body-bg: #f4f7f6; --card-bg: #ffffff;
+            --text-color: #333; --border-color: #dee2e6; --footer-bg: #212529; --footer-text: #adb5bd;
+            --success-bg: #28a745; --danger-bg: #dc3545; --secondary-bg: #6c757d;
+        }
+        body { font-family: 'Cairo', sans-serif; background-color: var(--body-bg); margin: 0; padding-top: 70px; display: flex; flex-direction: column; min-height: 100vh; }
+        .container { max-width: 1200px; margin: 0 auto; padding: 20px; flex-grow: 1; }
+        .page-header { text-align: center; margin-bottom: 40px; }
+        .page-header h1 { font-size: 2.5rem; color: var(--text-color); }
+        .page-header p { font-size: 1.1rem; color: #6c757d; }
+        .events-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 30px; }
+        .event-card {
+            background-color: var(--card-bg); border-radius: 8px; box-shadow: 0 4px 15px rgba(0,0,0,0.08);
+            overflow: hidden; display: flex; flex-direction: column; cursor: pointer;
+        }
+        .event-card-image { width: 100%; height: 200px; object-fit: cover; }
+        .event-card-content { padding: 20px; flex-grow: 1; display: flex; flex-direction: column; }
+        .event-card-title { font-size: 1.3rem; margin: 0 0 10px 0; }
+        .event-card-meta { font-size: 0.9rem; color: #6c757d; display: flex; align-items: center; gap: 15px; margin-bottom: 20px; }
+        .event-card-meta i { margin-left: 5px; }
+        .event-card-footer { margin-top: auto; }
+        .register-btn { width: 100%; padding: 12px; border: none; border-radius: 5px; color: white; font-size: 1rem; font-weight: 600; cursor: pointer; }
+        .register-btn.available { background-color: var(--success-bg); }
+        .register-btn.full, .register-btn.deadline-passed { background-color: var(--danger-bg); cursor: not-allowed; }
+        .register-btn.registered { background-color: var(--secondary-bg); cursor: not-allowed; }
+
+        /* Modal Styles */
+        .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.7); z-index: 2000; display: none; align-items: center; justify-content: center; }
+        .modal-container { background: white; border-radius: 8px; max-width: 700px; width: 90%; max-height: 90vh; overflow-y: auto; position: relative; }
+        .modal-header { padding: 20px; border-bottom: 1px solid var(--border-color); }
+        .modal-title { margin: 0; font-size: 1.5rem; }
+        .modal-close-btn { position: absolute; top: 10px; left: 10px; background: none; border: none; font-size: 1.5rem; cursor: pointer; }
+        .modal-body { padding: 20px; }
+        .modal-cover-image { width: 100%; height: 300px; object-fit: cover; border-radius: 5px; margin-bottom: 20px; }
+        .modal-details p { line-height: 1.7; }
+        .modal-footer { padding: 20px; border-top: 1px solid var(--border-color); text-align: left; }
+
+        /* Notification Styles */
+        .notification {
+            position: fixed;
+            bottom: 20px;
+            left: 20px;
+            padding: 15px 25px;
+            border-radius: 8px;
+            color: #fff;
+            font-weight: 600;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+            opacity: 0;
+            transform: translateY(100px);
+            transition: all 0.5s cubic-bezier(0.25, 1, 0.5, 1);
+            z-index: 2000;
+            display: none;
+        }
+        .notification.show {
+            opacity: 1;
+            transform: translateY(0);
+            display: block;
+        }
+        .notification.success { background-color: var(--success-bg); }
+        .notification.error { background-color: var(--danger-bg); }
+        
+        /* Navbar and Footer Styles (Full Code) */
+        .navbar { background-color: #fff; box-shadow: 0 2px 4px rgba(0,0,0,0.1); padding: 0 2rem; height: 70px; display: flex; align-items: center; justify-content: space-between; position: fixed; top: 0; right: 0; left: 0; z-index: 1000; }
+        .navbar-brand { display: flex; align-items: center; }
+        .navbar-brand img { height: 50px; margin-left: 10px; }
+        .navbar-links { display: flex; list-style: none; margin: 0; padding: 0; gap: 25px; }
+        .navbar-links a { text-decoration: none; color: var(--text-color); font-weight: 600; font-size: 1rem; }
+        .navbar-profile { position: relative; }
+        .navbar-profile-btn { background: none; border: none; cursor: pointer; padding: 0; }
+        .navbar-profile-img { width: 45px; height: 45px; border-radius: 50%; object-fit: cover; border: 2px solid var(--border-color); }
+        .profile-dropdown { display: none; position: absolute; left: 0; top: calc(100% + 10px); background-color: #fff; border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.15); list-style: none; padding: 10px 0; margin: 0; width: 220px; z-index: 1001; }
+        .profile-dropdown.show { display: block; }
+        .profile-dropdown a { display: flex; align-items: center; gap: 10px; padding: 10px 20px; text-decoration: none; color: #333; }
+        .profile-dropdown a:hover { background-color: #f5f5f5; }
+        .profile-dropdown .divider { height: 1px; background-color: var(--border-color); margin: 8px 0; }
+        .site-footer { background-color: var(--footer-bg); color: var(--footer-text); padding: 40px 0; font-size: 0.95rem; margin-top: auto; }
+        .footer-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 30px; max-width: 1200px; margin: 0 auto; padding: 0 20px; }
+        .footer-section h4 { color: white; margin-bottom: 15px; }
+        .footer-section p, .footer-section a { color: var(--footer-text); text-decoration: none; }
+        .footer-section a:hover { color: white; }
+        .social-links a { font-size: 1.5rem; margin-left: 15px; }
+        .copyright { text-align: center; margin-top: 40px; padding-top: 20px; border-top: 1px solid #343a40; }
+    </style>
+</head>
+<body>
+    <header id="navbar-container"></header>
+
+    <main class="container">
+        <div class="page-header">
+            <h1>الفعاليات والأنشطة</h1>
+            <p>انضم إلى فعالياتنا القادمة وكن جزءًا من مجتمعنا.</p>
+        </div>
+        <div class="events-grid" id="events-container">
+            <!-- Event cards will be loaded here -->
+        </div>
+    </main>
+    
+    <!-- Event Details Modal -->
+    <div class="modal-overlay" id="event-modal">
+        <div class="modal-container">
+            <button class="modal-close-btn" onclick="closeModal()">&times;</button>
+            <div id="modal-content">
+                <!-- Modal content will be loaded here -->
+            </div>
+        </div>
+    </div>
+
+    <footer id="footer-container"></footer>
+    <div id="notification-container"></div>
+
+    <script>
+        const token = localStorage.getItem('authToken');
+        let allEvents = [];
+
+        document.addEventListener('DOMContentLoaded', () => {
+            if (!token) { window.location.href = '/login'; return; }
+            loadNavbar();
+            loadFooter();
+            loadEvents();
+        });
+
+        async function loadEvents() {
+            try {
+                const res = await fetch('/api/student/events', { headers: { 'Authorization': `Bearer ${token}` } });
+                if (!res.ok) throw new Error('Failed to load events.');
+                const data = await res.json();
+                allEvents = data.events;
+                displayEvents(allEvents);
+            } catch (error) {
+                console.error(error);
+                document.getElementById('events-container').innerHTML = '<p>حدث خطأ أثناء تحميل الفعاليات.</p>';
+            }
+        }
+
+        function displayEvents(events) {
+            const container = document.getElementById('events-container');
+            container.innerHTML = '';
+            if (events.length === 0) {
+                container.innerHTML = '<p>لا توجد فعاليات متاحة حالياً.</p>';
+                return;
+            }
+            events.forEach(event => {
+                const card = document.createElement('div');
+                card.className = 'event-card';
+                card.onclick = () => openModal(event.id);
+                
+                const { buttonClass, buttonText } = getButtonState(event);
+                
+                card.innerHTML = `
+                    <img src="${event.cover_image_url || 'https://placehold.co/600x400'}" alt="${event.title}" class="event-card-image">
+                    <div class="event-card-content">
+                        <h2 class="event-card-title">${event.title}</h2>
+                        <div class="event-card-meta">
+                            <span><i class="fas fa-calendar-alt"></i> ${new Date(event.start_time).toLocaleDateString('ar-EG')}</span>
+                            <span><i class="fas fa-map-marker-alt"></i> ${event.location || 'غير محدد'}</span>
+                        </div>
+                        <div class="event-card-footer">
+                            <button class="register-btn ${buttonClass}" id="btn-card-${event.id}" onclick="event.stopPropagation(); registerForEvent(${event.id}, this)">${buttonText}</button>
+                        </div>
+                    </div>
+                `;
+                container.appendChild(card);
+            });
+        }
+
+        function getButtonState(event) {
+            let buttonClass = '';
+            let buttonText = '';
+            
+            const isDeadlinePassed = new Date(event.registration_deadline) < new Date();
+            const isFull = event.max_attendees > 0 && event.registered_count >= event.max_attendees;
+
+            if (event.is_registered) {
+                buttonClass = 'registered';
+                buttonText = 'مسجل بالفعل';
+            } else if (isDeadlinePassed) {
+                buttonClass = 'deadline-passed';
+                buttonText = 'انتهى التسجيل';
+            } else if (isFull) {
+                buttonClass = 'full';
+                buttonText = 'اكتمل العدد';
+            } else {
+                buttonClass = 'available';
+                buttonText = 'سجل الآن';
+            }
+            return { buttonClass, buttonText };
+        }
+
+        function openModal(eventId) {
+            const event = allEvents.find(e => e.id === eventId);
+            if (!event) return;
+            
+            const modal = document.getElementById('event-modal');
+            const modalContent = document.getElementById('modal-content');
+
+            const { buttonClass, buttonText } = getButtonState(event);
+            
+            modalContent.innerHTML = `
+                <div class="modal-header">
+                    <h2 class="modal-title">${event.title}</h2>
+                </div>
+                <div class="modal-body">
+                    <img src="${event.cover_image_url || 'https://placehold.co/700x300'}" alt="${event.title}" class="modal-cover-image">
+                    <div class="modal-details">
+                        <p><strong>الوصف:</strong><br>${event.description}</p>
+                        ${event.terms_conditions ? `<p><strong>الشروط والأحكام:</strong><br>${event.terms_conditions}</p>` : ''}
+                        <p><strong>الموقع:</strong> ${event.location}</p>
+                        <p><strong>تاريخ البدء:</strong> ${new Date(event.start_time).toLocaleString('ar-EG')}</p>
+                        <p><strong>تاريخ الانتهاء:</strong> ${new Date(event.end_time).toLocaleString('ar-EG')}</p>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                     <button class="register-btn ${buttonClass}" id="btn-modal-${event.id}" onclick="registerForEvent(${event.id}, this)">${buttonText}</button>
+                </div>
+            `;
+            modal.style.display = 'flex';
+        }
+
+        function closeModal() {
+            document.getElementById('event-modal').style.display = 'none';
+        }
+
+        async function registerForEvent(eventId, buttonElement) {
+            if (buttonElement.classList.contains('registered') || buttonElement.classList.contains('full') || buttonElement.classList.contains('deadline-passed')) {
+                return; // Do nothing for disabled buttons
+            }
+            try {
+                const res = await fetch(`/api/student/events/${eventId}/register`, {
+                    method: 'POST',
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+                const result = await res.json();
+                if (!res.ok) throw new Error(result.message);
+
+                showNotification(result.message, 'success');
+                // Update button states on both card and modal (if open)
+                const cardButton = document.getElementById(`btn-card-${eventId}`);
+                const modalButton = document.getElementById(`btn-modal-${eventId}`);
+                [cardButton, modalButton].forEach(btn => {
+                    if (btn) {
+                        btn.textContent = 'مسجل بالفعل';
+                        btn.className = 'register-btn registered';
+                    }
+                });
+                // Reload events to get updated counts
+                loadEvents();
+
+            } catch (error) {
+                showNotification(error.message, 'error');
+            }
+        }
+        
+        // --- Utility, Navbar and Footer Functions (Full Code) ---
+        let notificationTimeout;
+        function showNotification(message, type = 'success') {
+            const container = document.getElementById('notification-container');
+            if(!container) return; // Safety check
+            
+            // Create the notification element dynamically
+            const el = document.createElement('div');
+            el.className = `notification ${type}`;
+            el.textContent = message;
+            container.appendChild(el);
+            
+            // Animate in
+            setTimeout(() => el.classList.add('show'), 10);
+
+            // Animate out and remove
+            setTimeout(() => {
+                el.classList.remove('show');
+                el.addEventListener('transitionend', () => el.remove());
+            }, 5000);
+        }
+        
+        function loadFooter() {
+            document.getElementById('footer-container').innerHTML = `<div class="site-footer"><div class="container footer-grid"><div class="footer-section"><h4>اتحاد طلاب التربية النوعية</h4><p>نسعى لخدمة الطلاب وتوفير بيئة جامعية محفزة وداعمة.</p></div><div class="footer-section"><h4>تابعنا على</h4><div class="social-links"><a href="#" target="_blank"><i class="fab fa-facebook-square"></i></a><a href="#" target="_blank"><i class="fab fa-instagram"></i></a><a href="#" target="_blank"><i class="fab fa-youtube"></i></a></div></div><div class="footer-section"><h4>تطوير بواسطة</h4><p>Mohamed Wael</p><div class="social-links"><a href="https://github.com/mwael-01" target="_blank"><i class="fab fa-github"></i></a><a href="https://www.linkedin.com/in/mohamed-wael-922a73229/" target="_blank"><i class="fab fa-linkedin"></i></a></div></div></div><div class="copyright">&copy; ${new Date().getFullYear()} اتحاد طلاب كلية التربية النوعية. جميع الحقوق محفوظة.</div></div>`;
+        }
+        
+        async function loadNavbar() {
+            const navbarContainer = document.getElementById('navbar-container');
+            try {
+                const res = await fetch('/api/profile/me', { headers: { 'Authorization': `Bearer ${token}` } });
+                if (!res.ok) { logout(); return; }
+                const { user } = await res.json();
+                const adminRoles = ['super_admin', 'admin', 'moderator', 'editor', 'manager'];
+                const isAdmin = adminRoles.includes(user.role);
+                let dropdownHTML = `<li><a href="/profile.html"><i class="fas fa-user-circle"></i> الملف الشخصي</a></li>`;
+                if (isAdmin) { dropdownHTML += `<li><a href="/dashboard.html"><i class="fas fa-tachometer-alt"></i> It7ad Panel</a></li>`; }
+                dropdownHTML += `<li class="divider"></li><li><a href="#" id="logout-btn"><i class="fas fa-sign-out-alt"></i> تسجيل الخروج</a></li>`;
+                navbarContainer.innerHTML = `<nav class="navbar"><div class="navbar-brand"><img src="https://moglitch.alwaysdata.net/content/uploads/photos/2025/09/it7ad_2606da4f720c447e46a6662c8f20a2a1.png" alt="Logo"></div><ul class="navbar-links"><li><a href="/student/home.html">الرئيسية</a></li><li><a href="/student/news.html">الأخبار</a></li><li><a href="/student/events.html">الفعاليات</a></li><li><a href="/student/complaints.html">الشكاوى</a></li></ul><div class="navbar-profile"><button class="navbar-profile-btn" id="profile-btn"><img src="${user.profile_image_url || '/uploads/avatars/default.png'}" alt="Profile" class="navbar-profile-img"></button><ul class="profile-dropdown" id="profile-dropdown">${dropdownHTML}</ul></div></nav>`;
+                const profileBtn = document.getElementById('profile-btn');
+                const profileDropdown = document.getElementById('profile-dropdown');
+                profileBtn.addEventListener('click', () => profileDropdown.classList.toggle('show'));
+                document.getElementById('logout-btn').addEventListener('click', logout);
+                window.addEventListener('click', (e) => { if (!profileBtn.contains(e.target) && !profileDropdown.contains(e.target)) profileDropdown.classList.remove('show'); });
+            } catch (err) { logout(); }
+        }
+        
+        function logout() { 
+            localStorage.removeItem('authToken'); 
+            window.location.href = '/login'; 
+        }
+    </script>
+</body>
+</html>
+

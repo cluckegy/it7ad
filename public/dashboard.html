@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>لوحة التحكم - اتحاد الطلاب</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700&display=swap');
+        :root {
+            --primary-color: #0056b3; --sidebar-bg: #212529; --body-bg: #f4f7f6;
+            --card-bg: #ffffff; --text-color: #333; --light-text: #f8f9fa;
+        }
+        body {
+            font-family: 'Cairo', sans-serif; background-color: var(--body-bg);
+            margin: 0; display: flex;
+        }
+        .sidebar {
+            width: 250px; background-color: var(--sidebar-bg); color: var(--light-text);
+            display: flex; flex-direction: column; height: 100vh; position: fixed;
+        }
+        .sidebar-header { padding: 20px; text-align: center; border-bottom: 1px solid #444; }
+        .sidebar-header h3 { margin: 0; }
+        .sidebar-nav { flex-grow: 1; list-style: none; padding: 20px 0; margin: 0; }
+        .sidebar-nav li a {
+            display: block; padding: 15px 20px; color: var(--light-text);
+            text-decoration: none; transition: background 0.3s;
+        }
+        .sidebar-nav li a:hover, .sidebar-nav li a.active { background-color: var(--primary-color); }
+        .sidebar-nav li a i { margin-left: 10px; }
+        .main-content { margin-right: 250px; width: calc(100% - 250px); padding: 20px; }
+        header {
+            display: flex; justify-content: space-between; align-items: center;
+            background: var(--card-bg); padding: 15px 20px; border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1); margin-bottom: 20px;
+        }
+        .user-info { font-weight: 600; }
+        #logout-btn {
+            background: #dc3545; color: white; border: none; padding: 8px 15px;
+            border-radius: 5px; cursor: pointer; font-weight: 600;
+        }
+        .stats-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); gap: 20px; }
+        .stat-card {
+            background-color: var(--card-bg); padding: 25px; border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1); text-align: center;
+        }
+        .stat-card i { font-size: 2.5rem; color: var(--primary-color); margin-bottom: 15px; }
+        .stat-card h4 { margin: 0 0 10px 0; color: var(--text-color); }
+        .stat-card p { font-size: 2rem; font-weight: 700; color: var(--primary-color); margin: 0; }
+        .welcome-message {
+            background: var(--card-bg); padding: 20px; border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+    </style>
+</head>
+<body>
+
+    <aside class="sidebar">
+        <div class="sidebar-header">
+            <h3>اتحاد الطلاب</h3>
+        </div>
+        <ul class="sidebar-nav" id="sidebar-nav">
+            <!-- سيتم ملء القائمة ديناميكياً -->
+        </ul>
+    </aside>
+
+    <main class="main-content">
+        <header>
+            <div class="user-info" id="user-info">
+                مرحباً بك، <span id="user-name"></span> (<span id="user-role"></span>)
+            </div>
+            <button id="logout-btn">تسجيل الخروج</button>
+        </header>
+        
+        <div id="dashboard-content">
+            <div class="welcome-message">
+                <h2>أهلاً بك في لوحة التحكم</h2>
+                <p>هنا يمكنك إدارة مهامك والاطلاع على آخر الإحصائيات.</p>
+            </div>
+            <hr style="margin: 20px 0; border: 1px solid #eee;">
+            <div class="stats-grid" id="stats-grid">
+                <!-- سيتم ملء الإحصائيات ديناميكياً -->
+            </div>
+        </div>
+    </main>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', async () => {
+            const token = localStorage.getItem('authToken');
+            if (!token) {
+                window.location.href = '/login';
+                return;
+            }
+
+            try {
+                const response = await fetch('/api/dashboard', {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+
+                if (!response.ok) {
+                    if(response.status === 401) localStorage.removeItem('authToken');
+                    window.location.href = '/login';
+                    return;
+                }
+
+                const data = await response.json();
+                renderDashboard(data);
+
+            } catch (error) {
+                console.error('Error fetching dashboard data:', error);
+                window.location.href = '/login';
+            }
+        });
+
+        function renderDashboard(data) {
+            // Display user info
+            document.getElementById('user-name').textContent = data.user.full_name;
+            document.getElementById('user-role').textContent = data.user.role;
+
+            // Render stats cards
+            const statsGrid = document.getElementById('stats-grid');
+            if (data.stats && data.stats.length > 0) {
+                statsGrid.innerHTML = data.stats.map(stat => `
+                    <div class="stat-card">
+                        <i class="fa-solid ${stat.icon}"></i>
+                        <h4>${stat.title}</h4>
+                        <p>${stat.value}</p>
+                    </div>
+                `).join('');
+            } else {
+                 statsGrid.innerHTML = '<p>لا توجد إحصائيات لعرضها حالياً.</p>';
+            }
+
+            // Render sidebar navigation based on role
+            const sidebarNav = document.getElementById('sidebar-nav');
+            let navLinks = `<li><a href="/dashboard" class="active"><i class="fa-solid fa-house"></i> الرئيسية</a></li>`;
+            
+            const rolesNav = {
+                super_admin: `
+                    <li><a href="/admin/users"><i class="fa-solid fa-users-gear"></i> إدارة المستخدمين</a></li>
+                    <li><a href="/admin/content"><i class="fa-solid fa-file-lines"></i> إدارة المحتوى</a></li>
+                    <li><a href="/admin/settings"><i class="fa-solid fa-gear"></i> إعدادات الموقع</a></li>
+                `,
+                admin: `
+                    <li><a href="/admin/users"><i class="fa-solid fa-users"></i> إدارة المستخدمين</a></li>
+                    <li><a href="/admin/content"><i class="fa-solid fa-file-lines"></i> إدارة المحتوى</a></li>
+                `,
+                moderator: `<li><a href="/community/manage"><i class="fa-solid fa-comments"></i> إدارة المجتمع</a></li>`,
+                editor: `<li><a href="/editor/articles"><i class="fa-solid fa-pen-to-square"></i> مقالاتي</a></li>`,
+                manager: `<li><a href="/manager/reports"><i class="fa-solid fa-chart-line"></i> التقارير والإحصائيات</a></li>`,
+            };
+            
+            if(rolesNav[data.user.role]) {
+                navLinks += rolesNav[data.user.role];
+            }
+            sidebarNav.innerHTML = navLinks;
+        }
+
+        document.getElementById('logout-btn').addEventListener('click', () => {
+            localStorage.removeItem('authToken');
+            window.location.href = '/login';
+        });
+
+    </script>
+</body>
+</html>

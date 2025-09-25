@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>المسجلون في الفعالية - لوحة التحكم</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700&display=swap');
+        :root {
+            --primary-color: #0056b3; --sidebar-bg: #212529; --body-bg: #f4f7f6;
+            --card-bg: #ffffff; --text-color: #333; --light-text: #f8f9fa;
+        }
+        body { font-family: 'Cairo', sans-serif; background-color: var(--body-bg); margin: 0; display: flex; }
+        .sidebar { width: 250px; background-color: var(--sidebar-bg); color: var(--light-text); display: flex; flex-direction: column; height: 100vh; position: fixed; }
+        .sidebar-header { padding: 20px; text-align: center; border-bottom: 1px solid #444; }
+        .sidebar-nav { flex-grow: 1; list-style: none; padding: 20px 0; margin: 0; }
+        .sidebar-nav li a { display: block; padding: 15px 20px; color: var(--light-text); text-decoration: none; }
+        .sidebar-nav li a:hover, .sidebar-nav li a.active { background-color: var(--primary-color); }
+        .sidebar-nav li a i { margin-left: 10px; }
+        .main-content { margin-right: 250px; width: calc(100% - 250px); padding: 20px; }
+        .card { background: var(--card-bg); border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); overflow: hidden; }
+        .card-header { padding: 15px 20px; border-bottom: 1px solid #eee; display: flex; justify-content: space-between; align-items: center; }
+        .back-btn { background: #6c757d; color: white; padding: 8px 15px; text-decoration: none; border-radius: 5px; font-size: 14px; }
+        .table-container { overflow-x: auto; }
+        table { width: 100%; border-collapse: collapse; }
+        th, td { padding: 15px; text-align: right; border-bottom: 1px solid #eee; }
+        th { background-color: #f8f9fa; }
+    </style>
+</head>
+<body>
+    <aside class="sidebar" id="sidebar-container"></aside>
+    <main class="main-content">
+        <div class="card">
+            <div class="card-header">
+                <h2 id="event-title">قائمة المسجلين</h2>
+                <a href="/admin/events.html" class="back-btn"><i class="fas fa-arrow-right"></i> العودة للفعاليات</a>
+            </div>
+            <div class="table-container">
+                <table id="registrations-table">
+                    <thead>
+                        <tr>
+                            <th>الاسم الكامل</th>
+                            <th>البريد الإلكتروني</th>
+                            <th>الفرقة الدراسية</th>
+                            <th>وقت التسجيل</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <!-- Rows will be inserted here by JavaScript -->
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </main>
+    
+    <script>
+        const token = localStorage.getItem('authToken');
+        const registrationsTableBody = document.querySelector('#registrations-table tbody');
+        const eventTitleH2 = document.getElementById('event-title');
+        const urlParams = new URLSearchParams(window.location.search);
+        const eventId = urlParams.get('id');
+
+        document.addEventListener('DOMContentLoaded', () => {
+            if (!token || !eventId) { window.location.href = '/login'; return; }
+            loadSidebar();
+            loadRegistrations();
+        });
+        
+        async function loadRegistrations() {
+            try {
+                const response = await fetch(`/api/events/${eventId}/registrations`, { headers: { 'Authorization': `Bearer ${token}` } });
+                if (!response.ok) throw new Error('Failed to load data');
+                const data = await response.json();
+                
+                eventTitleH2.textContent = `المسجلون في: ${data.eventTitle}`;
+                registrationsTableBody.innerHTML = '';
+                
+                if (data.registrations.length === 0) {
+                    registrationsTableBody.innerHTML = '<tr><td colspan="4" style="text-align:center;">لا يوجد أي مسجلين في هذه الفعالية بعد.</td></tr>';
+                    return;
+                }
+
+                data.registrations.forEach(reg => {
+                    const row = `
+                        <tr>
+                            <td>${reg.full_name}</td>
+                            <td>${reg.email}</td>
+                            <td>${reg.academic_year}</td>
+                            <td>${new Date(reg.registration_time).toLocaleString('ar-EG')}</td>
+                        </tr>`;
+                    registrationsTableBody.innerHTML += row;
+                });
+            } catch (error) {
+                console.error('Failed to load registrations:', error);
+                registrationsTableBody.innerHTML = '<tr><td colspan="4" style="text-align:center;">حدث خطأ أثناء تحميل البيانات.</td></tr>';
+            }
+        }
+        
+        function loadSidebar() {
+            const sidebarContainer = document.getElementById('sidebar-container');
+            sidebarContainer.innerHTML = `
+                <div class="sidebar-header"><h3>لوحة التحكم</h3></div>
+                <ul class="sidebar-nav">
+                    <li><a href="/dashboard.html"><i class="fas fa-tachometer-alt"></i> الرئيسية</a></li>
+                    <li><a href="/admin/users.html"><i class="fas fa-users"></i> إدارة المستخدمين</a></li>
+                    <li><a href="/admin/content.html"><i class="fas fa-newspaper"></i> إدارة المحتوى</a></li>
+                    <li><a href="/admin/events.html" class="active"><i class="fas fa-calendar-alt"></i> إدارة الفعاليات</a></li>
+                </ul>`;
+        }
+    </script>
+</body>
+</html>

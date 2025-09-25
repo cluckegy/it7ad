@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>إدارة الاستطلاعات - لوحة التحكم</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700&display=swap');
+        :root {
+            --primary-color: #0056b3; --sidebar-bg: #212529; --body-bg: #f4f7f6;
+            --card-bg: #ffffff; --text-color: #333; --light-text: #f8f9fa; --danger: #dc3545; --success: #28a745; --warning: #ffc107;
+        }
+        body { font-family: 'Cairo', sans-serif; background-color: var(--body-bg); margin: 0; display: flex; }
+        .sidebar { width: 250px; background-color: var(--sidebar-bg); color: var(--light-text); display: flex; flex-direction: column; height: 100vh; position: fixed; }
+        .main-content { margin-right: 250px; width: calc(100% - 250px); padding: 20px; }
+        .card { background: var(--card-bg); border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); overflow: hidden; }
+        .card-header { padding: 15px 20px; border-bottom: 1px solid #eee; display: flex; justify-content: space-between; align-items: center; }
+        .new-btn { background: var(--success); color: white; padding: 8px 15px; text-decoration: none; border-radius: 5px; }
+        table { width: 100%; border-collapse: collapse; }
+        th, td { padding: 15px; text-align: right; border-bottom: 1px solid #eee; }
+        th { background-color: #f8f9fa; }
+        .badge { padding: .3em .6em; font-size: 80%; font-weight: 600; border-radius: .25rem; }
+        .badge-active { color: #fff; background-color: var(--success); }
+        .badge-draft { color: #212529; background-color: var(--warning); }
+        .badge-closed { color: #fff; background-color: #6c757d; }
+        .actions a { color: white; padding: 5px 10px; border-radius: 4px; text-decoration: none; font-size: 14px; margin-left: 5px; }
+        .actions .view { background-color: #17a2b8; }
+        .actions .edit { background-color: #ffc107; }
+        .actions .delete { background-color: var(--danger); cursor: pointer; }
+    </style>
+</head>
+<body>
+    <aside class="sidebar" id="sidebar-container"></aside>
+    <main class="main-content">
+        <div class="card">
+            <div class="card-header">
+                <h2>إدارة الاستطلاعات</h2>
+                <a href="/admin/survey-editor.html" class="new-btn"><i class="fas fa-plus"></i> استطلاع جديد</a>
+            </div>
+            <div class="table-container">
+                <table id="surveys-table">
+                    <thead>
+                        <tr>
+                            <th>العنوان</th>
+                            <th>الحالة</th>
+                            <th>المنشئ</th>
+                            <th>تاريخ الإنشاء</th>
+                            <th>إجراءات</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <!-- Rows will be populated by JavaScript -->
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </main>
+    <script>
+        const token = localStorage.getItem('authToken');
+        const tableBody = document.querySelector('#surveys-table tbody');
+
+        document.addEventListener('DOMContentLoaded', () => {
+            if (!token) { window.location.href = '/login'; return; }
+            loadSidebar();
+            loadSurveys();
+        });
+
+        async function loadSurveys() {
+            try {
+                const response = await fetch('/api/surveys', { headers: { 'Authorization': `Bearer ${token}` } });
+                const surveys = await response.json();
+                tableBody.innerHTML = '';
+                surveys.forEach(survey => {
+                    let statusBadge;
+                    switch(survey.status) {
+                        case 'active': statusBadge = '<span class="badge badge-active">نشط</span>'; break;
+                        case 'draft': statusBadge = '<span class="badge badge-draft">مسودة</span>'; break;
+                        case 'closed': statusBadge = '<span class="badge badge-closed">مغلق</span>'; break;
+                    }
+                    const row = `
+                        <tr>
+                            <td>${survey.title}</td>
+                            <td>${statusBadge}</td>
+                            <td>${survey.creator_name}</td>
+                            <td>${new Date(survey.created_at).toLocaleDateString('ar-EG')}</td>
+                            <td class="actions">
+                                <a href="#" class="view"><i class="fas fa-chart-bar"></i></a>
+                                <a href="#" class="edit"><i class="fas fa-edit"></i></a>
+                                <a onclick="deleteSurvey(${survey.id})" class="delete"><i class="fas fa-trash"></i></a>
+                            </td>
+                        </tr>`;
+                    tableBody.innerHTML += row;
+                });
+            } catch (error) { console.error('Failed to load surveys:', error); }
+        }
+        function deleteSurvey(id) { alert('Delete functionality to be implemented.'); }
+        function loadSidebar() {
+             document.getElementById('sidebar-container').innerHTML = `
+                <div class="sidebar-header"><h3>لوحة التحكم</h3></div>
+                <ul class="sidebar-nav">
+                    <li><a href="/dashboard.html"><i class="fas fa-tachometer-alt"></i> الرئيسية</a></li>
+                    <li><a href="/admin/users.html"><i class="fas fa-users"></i> إدارة المستخدمين</a></li>
+                    <li><a href="/admin/content.html"><i class="fas fa-newspaper"></i> إدارة المحتوى</a></li>
+                    <li><a href="/admin/events.html"><i class="fas fa-calendar-alt"></i> إدارة الفعاليات</a></li>
+                    <li><a href="/admin/surveys.html" class="active"><i class="fas fa-poll"></i> إدارة الاستطلاعات</a></li>
+                </ul>`;
+        }
+    </script>
+</body>
+</html>

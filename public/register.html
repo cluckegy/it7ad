@@ -1,0 +1,303 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>إنشاء حساب - بوابة اتحاد الطلاب</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700&display=swap');
+        @import url('https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700&display=swap');
+        :root {
+            --primary-color: #0056b3; --body-bg: #f8f9fa; --form-bg: #ffffff;
+            --text-color: #333; --border-color: #dee2e6; --success: #28a745; --danger: #dc3545;
+            --font-ar: 'Cairo', sans-serif; --font-en: 'Plus Jakarta Sans', sans-serif;
+        }
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body {
+            font-family: var(--font-ar);
+            background-color: var(--body-bg);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            color: var(--text-color);
+            padding: 20px;
+        }
+        body.en { font-family: var(--font-en); }
+        .auth-container {
+            display: flex;
+            width: 100%;
+            max-width: 1100px;
+            background-color: var(--form-bg);
+            border-radius: 12px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+            overflow: hidden;
+        }
+        .auth-panel {
+            flex: 1.2;
+            padding: 30px 40px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            position: relative;
+        }
+        .auth-welcome-panel {
+            flex: 0.8;
+            background: linear-gradient(to bottom, rgba(0, 86, 179, 0.85), rgba(0, 61, 130, 0.95)), url('https://lh3.googleusercontent.com/gps-cs-s/AC9h4noGTCvoszKUhcpaaAUDOfOtEBQZIPvJmH70eo7_ZmOmTxA0NVr4CQ0G3mNOUQqfn5BwXYkH_OZaMSZBXgP8FhIkvF-qLYAfOPH2iIggXc_FGO5Bq6IKNwzqp7p0p5VJ-fCfUqylRg=s680-w680-h510-rw') center/cover no-repeat;
+            color: white;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            padding: 20px;
+        }
+        .auth-welcome-panel img { width: 100px; margin-bottom: 20px; }
+        .auth-welcome-panel h1 { font-size: 1.8rem; margin-bottom: 10px; }
+        
+        .auth-form { width: 100%; max-width: 500px; margin: 0 auto; }
+        .auth-form h2 { margin-bottom: 10px; font-size: 1.8rem; text-align: center; }
+        .auth-form p { color: #6c757d; margin-bottom: 25px; text-align: center; }
+        .form-row { display: flex; gap: 20px; }
+        .form-group { margin-bottom: 15px; flex: 1; text-align: right; }
+        body.en .form-group { text-align: left; }
+        .form-group label { display: block; font-weight: 600; margin-bottom: 8px; }
+        .form-group input, .form-group select { width: 100%; padding: 10px; border-radius: 5px; border: 1px solid var(--border-color); font-size: 0.95rem; }
+        #password-strength { display: none; margin-top: 10px; font-size: 0.85rem; text-align: right; }
+        body.en #password-strength { text-align: left; }
+        .strength-check { display: flex; align-items: center; margin-bottom: 5px; color: #6c757d; transition: color 0.3s; }
+        .strength-check.valid { color: var(--success); }
+        .strength-check i { margin-left: 8px; }
+        body.en .strength-check i { margin-left: 0; margin-right: 8px; }
+        .terms-group { display: flex; align-items: center; gap: 10px; margin: 20px 0; justify-content: center; }
+        .submit-btn {
+            width: 100%;
+            padding: 12px;
+            border: none;
+            border-radius: 8px;
+            background: linear-gradient(45deg, #28a745, #218838);
+            color: white;
+            font-size: 1.1rem;
+            font-weight: 700;
+            cursor: pointer;
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+            box-shadow: 0 4px 15px rgba(40, 167, 69, 0.3);
+        }
+        .submit-btn:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 7px 20px rgba(40, 167, 69, 0.4);
+        }
+        .form-footer { margin-top: 25px; text-align: center; color: #6c757d; font-size: 0.95rem; }
+        .form-footer a { color: var(--primary-color); text-decoration: none; font-weight: 600; }
+        .notification { display: none; margin-bottom: 15px; padding: 12px; border-radius: 5px; color: #fff; text-align: center; }
+        .notification.success { background-color: var(--success); }
+        .notification.error { background-color: var(--danger); }
+        .lang-switch-container { position: absolute; top: 20px; right: 20px; }
+        .lang-switch { position: relative; display: inline-block; width: 60px; height: 34px; }
+        .lang-switch input { display:none; }
+        .slider { position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: #ccc; transition: .4s; border-radius: 34px; }
+        .slider:before { position: absolute; content: ""; height: 26px; width: 26px; left: 4px; bottom: 4px; background-color: white; transition: .4s; border-radius: 50%; }
+        input:checked + .slider { background-color: var(--primary-color); }
+        input:checked + .slider:before { transform: translateX(26px); }
+        .slider:after { content: 'AR'; color: white; display: block; position: absolute; transform: translate(-50%,-50%); top: 50%; left: 75%; font-size: 10px; }
+        input:checked + .slider:after { content: 'EN'; left: 25%; }
+        @media (max-width: 850px) {
+            .auth-container { flex-direction: column; min-height: auto; }
+            .auth-welcome-panel { display: none; }
+        }
+        @media (max-width: 600px) {
+            .form-row { flex-direction: column; gap: 0; }
+        }
+    </style>
+</head>
+<body>
+    <div class="auth-container">
+        <div class="auth-welcome-panel">
+            <img src="https://moglitch.alwaysdata.net/content/uploads/photos/2025/09/it7ad_2606da4f720c447e46a6662c8f20a2a1.png" alt="Logo">
+            <h1 data-ar="مرحباً في بوابة اتحاد كلية التربية النوعية" data-en="Welcome to The Student Union Portal">مرحباً في بوابة اتحاد كلية التربية النوعية</h1>
+        </div>
+        <div class="auth-panel">
+            <div class="lang-switch-container">
+                <label class="lang-switch">
+                    <input type="checkbox" id="lang-toggle-checkbox">
+                    <span class="slider"></span>
+                </label>
+            </div>
+            <div class="auth-form">
+                <h2 data-ar="إنشاء حساب جديد" data-en="Create a New Account">إنشاء حساب جديد</h2>
+                <p data-ar="انضم إلينا الآن! يستغرق الأمر دقيقة واحدة فقط." data-en="Join us now! It only takes a minute.">انضم إلينا الآن! يستغرق الأمر دقيقة واحدة فقط.</p>
+                <div id="notification" class="notification"></div>
+                <form id="registerForm">
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="full_name" data-ar="الاسم بالكامل" data-en="Full Name">الاسم بالكامل</label>
+                            <input type="text" id="full_name" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="username" data-ar="اسم المستخدم (إنجليزية)" data-en="Username (English)">اسم المستخدم (إنجليزية)</label>
+                            <input type="text" id="username" required>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label for="email" data-ar="البريد الإلكتروني الجامعي" data-en="University Email">البريد الإلكتروني الجامعي</label>
+                        <input type="email" id="email" required placeholder="example@mans.edu.eg">
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="password" data-ar="كلمة المرور" data-en="Password">كلمة المرور</label>
+                            <input type="password" id="password" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="confirm_password" data-ar="تأكيد كلمة المرور" data-en="Confirm Password">تأكيد كلمة المرور</label>
+                            <input type="password" id="confirm_password" required>
+                        </div>
+                    </div>
+                    <div id="password-strength">
+                        <div class="strength-check" id="check-length"><i class="fas fa-times-circle"></i> <span data-ar="8 حروف على الأقل" data-en="At least 8 characters">8 حروف على الأقل</span></div>
+                        <div class="strength-check" id="check-uppercase"><i class="fas fa-times-circle"></i> <span data-ar="حرف كبير واحد على الأقل" data-en="At least one uppercase letter">حرف كبير واحد على الأقل</span></div>
+                        <div class="strength-check" id="check-lowercase"><i class="fas fa-times-circle"></i> <span data-ar="حرف صغير واحد على الأقل" data-en="At least one lowercase letter">حرف صغير واحد على الأقل</span></div>
+                        <div class="strength-check" id="check-number"><i class="fas fa-times-circle"></i> <span data-ar="رقم واحد على الأقل" data-en="At least one number">رقم واحد على الأقل</span></div>
+                        <div class="strength-check" id="check-symbol"><i class="fas fa-times-circle"></i> <span data-ar="رمز خاص واحد على الأقل" data-en="At least one special symbol">رمز خاص واحد على الأقل</span></div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="country" data-ar="الدولة" data-en="Country">الدولة</label>
+                            <select id="country" required></select>
+                        </div>
+                        <div class="form-group">
+                            <label for="academic_year" data-ar="الفرقة الدراسية" data-en="Academic Year">الفرقة الدراسية</label>
+                            <select id="academic_year" required></select>
+                        </div>
+                    </div>
+                    <div class="terms-group">
+                        <input type="checkbox" id="terms" required>
+                        <label for="terms" data-ar="أوافق على الشروط والأحكام" data-en="I agree to the Terms & Conditions">أوافق على الشروط والأحكام</label>
+                    </div>
+                    <button type="submit" class="submit-btn" data-ar="إنشاء الحساب" data-en="Create Account">إنشاء الحساب</button>
+                </form>
+                <div class="form-footer">
+                    <span data-ar="لديك حساب بالفعل؟" data-en="Already have an account?">لديك حساب بالفعل؟</span>
+                    <a href="/login" data-ar="سجل الدخول" data-en="Sign In">سجل الدخول</a>
+                </div>
+            </div>
+        </div>
+    </div>
+    <script>
+        const langToggleCheckbox = document.getElementById('lang-toggle-checkbox');
+        let currentLang = 'ar';
+        
+        const academicYearsData = { 
+            ar: { "first_year": "الفرقة الأولى", "second_year": "الفرقة الثانية", "third_year": "الفرقة الثالثة", "fourth_year": "الفرقة الرابعة", "postgraduate": "دراسات عليا" }, 
+            en: { "first_year": "First Year", "second_year": "Second Year", "third_year": "Third Year", "fourth_year": "Fourth Year", "postgraduate": "Postgraduate" } 
+        };
+        const countriesData = { 
+            ar: ["مصر", "السعودية", "الإمارات", "الكويت", "قطر", "البحرين", "عمان", "الأردن", "لبنان", "سوريا", "فلسطين", "العراق", "اليمن", "ليبيا", "تونس", "الجزائر", "المغرب", "السودان", "الصومال", "جيبوتي", "موريتانيا", "جزر القمر"], 
+            en: ["Egypt", "Saudi Arabia", "United Arab Emirates", "Kuwait", "Qatar", "Bahrain", "Oman", "Jordan", "Lebanon", "Syria", "Palestine", "Iraq", "Yemen", "Libya", "Tunisia", "Algeria", "Morocco", "Sudan", "Somalia", "Djibouti", "Mauritania", "Comoros"] 
+        };
+
+        langToggleCheckbox.addEventListener('change', () => {
+            currentLang = langToggleCheckbox.checked ? 'en' : 'ar';
+            document.body.dir = currentLang === 'ar' ? 'rtl' : 'ltr';
+            document.body.classList.toggle('en', currentLang === 'en');
+            updateUI();
+        });
+        
+        function updateUI() {
+            document.querySelectorAll('[data-ar]').forEach(el => {
+                el.textContent = el.dataset[currentLang];
+            });
+            populateAcademicYears();
+            populateCountries();
+        }
+        
+        function populateCountries() {
+            const select = document.getElementById('country');
+            const currentVal = select.value;
+            select.innerHTML = `<option value="" disabled>${currentLang === 'ar' ? '-- اختر الدولة --' : '-- Select Country --'}</option>`;
+            countriesData[currentLang].forEach(country => {
+                const enCountry = countriesData.en[countriesData.ar.indexOf(country)] || country;
+                select.innerHTML += `<option value="${enCountry}">${country}</option>`;
+            });
+            select.value = currentVal || "";
+            if (!select.value) select.selectedIndex = 0;
+        }
+
+        function populateAcademicYears() {
+            const select = document.getElementById('academic_year');
+            const currentVal = select.value;
+            select.innerHTML = `<option value="" disabled>${currentLang === 'ar' ? '-- اختر الفرقة --' : '-- Select Year --'}</option>`;
+            for (const key in academicYearsData[currentLang]) {
+                select.innerHTML += `<option value="${key}">${academicYearsData[currentLang][key]}</option>`;
+            }
+            if (currentVal) select.value = currentVal;
+            else select.selectedIndex = 0;
+        }
+
+        const passwordInput = document.getElementById('password');
+        const strengthContainer = document.getElementById('password-strength');
+        passwordInput.addEventListener('focus', () => { strengthContainer.style.display = 'block'; });
+        passwordInput.addEventListener('input', () => {
+            const value = passwordInput.value;
+            validateAndStyle('check-length', value.length >= 8);
+            validateAndStyle('check-uppercase', /[A-Z]/.test(value));
+            validateAndStyle('check-lowercase', /[a-z]/.test(value));
+            validateAndStyle('check-number', /[0-9]/.test(value));
+            validateAndStyle('check-symbol', /[^A-Za-z0-9]/.test(value));
+        });
+
+        function validateAndStyle(id, isValid) {
+            const el = document.getElementById(id);
+            el.classList.toggle('valid', isValid);
+            el.querySelector('i').className = isValid ? 'fas fa-check-circle' : 'fas fa-times-circle';
+        }
+
+        document.getElementById('registerForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            const notification = document.getElementById('notification');
+            const formData = {
+                full_name: document.getElementById('full_name').value,
+                username: document.getElementById('username').value,
+                email: document.getElementById('email').value,
+                password: document.getElementById('password').value,
+                confirm_password: document.getElementById('confirm_password').value,
+                country: document.getElementById('country').value,
+                academic_year: document.getElementById('academic_year').value
+            };
+            if (!formData.email.endsWith('@mans.edu.eg')) {
+                notification.textContent = currentLang === 'ar' ? 'يجب استخدام البريد الإلكتروني الجامعي (@mans.edu.eg).' : 'You must use your university email (@mans.edu.eg).';
+                notification.className = 'notification error';
+                notification.style.display = 'block';
+                return;
+            }
+            if (formData.password !== formData.confirm_password) {
+                notification.textContent = currentLang === 'ar' ? 'كلمتا المرور غير متطابقتين.' : 'Passwords do not match.';
+                notification.className = 'notification error';
+                notification.style.display = 'block';
+                return;
+            }
+            try {
+                const res = await fetch('/api/auth/register', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(formData)
+                });
+                const data = await res.json();
+                if (!res.ok) throw new Error(data.message);
+                notification.textContent = data.message;
+                notification.className = 'notification success';
+                notification.style.display = 'block';
+                setTimeout(() => { window.location.href = '/login'; }, 2000);
+            } catch (error) {
+                notification.textContent = error.message;
+                notification.className = 'notification error';
+                notification.style.display = 'block';
+            }
+        });
+        
+        populateCountries();
+        populateAcademicYears();
+    </script>
+</body>
+</html>
+

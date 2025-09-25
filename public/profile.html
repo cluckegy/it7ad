@@ -1,0 +1,358 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>الملف الشخصي - بوابة اتحاد الطلاب</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700&display=swap');
+        :root {
+            --primary-color: #0056b3; --body-bg: #f4f7f6; --card-bg: #ffffff;
+            --text-color: #333; --danger: #dc3545; --success: #28a745; --border-color: #dee2e6;
+        }
+        /* --- General Body and Layout --- */
+        body { font-family: 'Cairo', sans-serif; background-color: var(--body-bg); margin: 0; padding-top: 70px; /* Space for fixed navbar */ }
+        .container { max-width: 1200px; margin: 0 auto; padding: 20px; }
+        
+        /* --- Navbar Styles --- */
+        .navbar {
+            background-color: #fff; box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            padding: 0 2rem; height: 70px; display: flex; align-items: center; justify-content: space-between;
+            position: fixed; top: 0; right: 0; left: 0; z-index: 1000;
+        }
+        .navbar-brand { display: flex; align-items: center; }
+        .navbar-brand img { height: 50px; margin-left: 10px; }
+        .navbar-links { display: flex; list-style: none; margin: 0; padding: 0; gap: 25px; }
+        .navbar-links a { text-decoration: none; color: var(--text-color); font-weight: 600; font-size: 1rem; }
+        .navbar-profile { position: relative; }
+        .navbar-profile-btn { background: none; border: none; cursor: pointer; padding: 0; }
+        .navbar-profile-img { width: 45px; height: 45px; border-radius: 50%; object-fit: cover; border: 2px solid var(--border-color); }
+        .profile-dropdown {
+            display: none; position: absolute; left: 0; top: calc(100% + 10px);
+            background-color: #fff; border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+            list-style: none; padding: 10px 0; margin: 0; width: 220px; z-index: 1001;
+        }
+        .profile-dropdown.show { display: block; }
+        .profile-dropdown a { display: flex; align-items: center; gap: 10px; padding: 10px 20px; text-decoration: none; color: #333; }
+        .profile-dropdown a:hover { background-color: #f5f5f5; }
+        .profile-dropdown .divider { height: 1px; background-color: var(--border-color); margin: 8px 0; }
+        .profile-dropdown a i { width: 20px; text-align: center; }
+
+        /* --- Profile Page Specific Styles --- */
+        .profile-grid { display: grid; grid-template-columns: 1fr 2fr; gap: 20px; }
+        .card { background-color: var(--card-bg); padding: 20px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
+        .profile-card { text-align: center; }
+        .profile-picture-container { position: relative; width: 150px; height: 150px; margin: 0 auto 20px; }
+        .profile-picture { width: 100%; height: 100%; border-radius: 50%; object-fit: cover; border: 4px solid #fff; box-shadow: 0 0 10px rgba(0,0,0,0.2); }
+        .upload-overlay { position: absolute; bottom: 0; right: 0; background-color: var(--primary-color); color: white; width: 40px; height: 40px; border-radius: 50%; display: flex; align-items: center; justify-content: center; cursor: pointer; border: 2px solid white; }
+        #profile_picture_input { display: none; }
+        .user-info p { text-align: right; margin: 10px 0; }
+        .user-info strong { margin-left: 10px; }
+        .tabs { display: flex; border-bottom: 1px solid var(--border-color); margin-bottom: 20px; }
+        .tab-button { background: none; border: none; padding: 10px 20px; cursor: pointer; font-size: 1rem; font-weight: 600; color: #6c757d; border-bottom: 3px solid transparent; }
+        .tab-button.active { color: var(--primary-color); border-bottom-color: var(--primary-color); }
+        .tab-content { display: none; }
+        .tab-content.active { display: block; }
+        .activity-list { list-style: none; padding: 0; }
+        .activity-list li { display: flex; align-items: center; padding: 15px 0; border-bottom: 1px solid #f0f0f0; }
+        .activity-list li:last-child { border-bottom: none; }
+        .activity-icon { font-size: 1.5rem; color: var(--primary-color); margin-left: 15px; }
+        .activity-details { flex-grow: 1; }
+        .activity-details .title { font-weight: 600; }
+        .activity-details .meta { font-size: 0.9rem; color: #6c757d; }
+        .password-form .form-group { margin-bottom: 15px; }
+        .password-form label { display: block; margin-bottom: 5px; font-weight: 600; }
+        .password-form input { width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 5px; }
+        .password-form button { background-color: var(--primary-color); color: white; border: none; padding: 10px 20px; border-radius: 5px; cursor: pointer; margin-top: 10px; }
+
+        /* --- Notification Styles --- */
+        .notification {
+            position: fixed;
+            bottom: 20px;
+            left: 20px;
+            padding: 15px 25px;
+            border-radius: 8px;
+            color: #fff;
+            font-weight: 600;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+            opacity: 0;
+            transform: translateY(100px);
+            transition: all 0.5s cubic-bezier(0.25, 1, 0.5, 1);
+            z-index: 2000;
+        }
+        .notification.show {
+            opacity: 1;
+            transform: translateY(0);
+        }
+        .notification.success { background-color: var(--success); }
+        .notification.error { background-color: var(--danger); }
+    </style>
+</head>
+<body>
+    <header id="navbar-container"></header>
+    <main class="container">
+        <h1>الملف الشخصي</h1>
+        <div class="profile-grid">
+            <div class="left-column">
+                <div class="card profile-card">
+                    <div class="profile-picture-container">
+                        <img src="/uploads/avatars/default.png" alt="Profile Picture" class="profile-picture" id="profile-picture-img">
+                        <label for="profile_picture_input" class="upload-overlay">
+                            <i class="fas fa-camera"></i>
+                        </label>
+                        <input type="file" id="profile_picture_input" accept="image/*">
+                    </div>
+                    <h2 id="user-fullname"></h2>
+                    <p id="user-username" style="color: #6c757d;"></p>
+                </div>
+                <div class="card user-info">
+                    <h3>المعلومات الأساسية</h3>
+                    <p><strong>البريد الإلكتروني:</strong> <span id="user-email"></span></p>
+                    <p><strong>رقم الهاتف:</strong> <span id="user-phone"></span></p>
+                    <p><strong>الفرقة الدراسية:</strong> <span id="user-academic-year"></span></p>
+                    <p><strong>الدولة:</strong> <span id="user-country"></span></p>
+                </div>
+            </div>
+            <div class="right-column">
+                <div class="card">
+                    <div class="tabs">
+                        <button class="tab-button active" data-tab="events">الفعاليات</button>
+                        <button class="tab-button" data-tab="complaints">الشكاوى</button>
+                        <button class="tab-button" data-tab="surveys">الاستطلاعات</button>
+                        <button class="tab-button" data-tab="security">الأمان</button>
+                    </div>
+
+                    <div id="events" class="tab-content active">
+                        <h3>آخر 5 فعاليات سجلت بها</h3>
+                        <ul class="activity-list" id="events-list"></ul>
+                    </div>
+                    <div id="complaints" class="tab-content">
+                        <h3>آخر 5 شكاوى قدمتها</h3>
+                        <ul class="activity-list" id="complaints-list"></ul>
+                    </div>
+                    <div id="surveys" class="tab-content">
+                        <h3>آخر 5 استطلاعات شاركت بها</h3>
+                        <ul class="activity-list" id="surveys-list"></ul>
+                    </div>
+                    <div id="security" class="tab-content">
+                        <h3>تغيير كلمة المرور</h3>
+                        <form id="passwordChangeForm" class="password-form">
+                            <div class="form-group">
+                                <label for="oldPassword">كلمة المرور الحالية</label>
+                                <input type="password" id="oldPassword" required>
+                            </div>
+                            <div class="form-group">
+                                <label for="newPassword">كلمة المرور الجديدة</label>
+                                <input type="password" id="newPassword" required>
+                            </div>
+                            <button type="submit">تحديث كلمة المرور</button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+    <div id="notification-container" class="notification"></div>
+    <script>
+        const token = localStorage.getItem('authToken');
+        const academicYearMap = {
+            'first_year': 'الفرقة الأولى', 'second_year': 'الفرقة الثانية', 'third_year': 'الفرقة الثالثة',
+            'fourth_year': 'الفرقة الرابعة', 'postgraduate': 'دراسات عليا'
+        };
+        const statusMap = {
+            'received': 'تم الاستلام', 'under_review': 'تحت المراجعة', 'pending_student_response': 'بانتظار ردك',
+            'action_taken': 'تم اتخاذ إجراء', 'closed': 'مغلقة'
+        };
+
+        document.addEventListener('DOMContentLoaded', () => {
+            if (!token) { window.location.href = '/login'; return; }
+            loadNavbar(); // Replaced loadSidebar with loadNavbar
+            loadProfileData();
+            setupEventListeners();
+        });
+
+        // --- NEW NOTIFICATION FUNCTION ---
+        let notificationTimeout;
+        function showNotification(message, type = 'success') {
+            const notificationContainer = document.getElementById('notification-container');
+            clearTimeout(notificationTimeout);
+            
+            notificationContainer.textContent = message;
+            notificationContainer.className = 'notification'; // Reset classes
+            notificationContainer.classList.add(type, 'show');
+
+            notificationTimeout = setTimeout(() => {
+                notificationContainer.classList.remove('show');
+            }, 3000);
+        }
+        
+        // --- NEW NAVBAR FUNCTION ---
+        async function loadNavbar() {
+            const navbarContainer = document.getElementById('navbar-container');
+            const res = await fetch('/api/profile/me', { headers: { 'Authorization': `Bearer ${token}` } });
+            if (!res.ok) { logout(); return; }
+            const { user } = await res.json();
+            
+            const adminRoles = ['super_admin', 'admin', 'moderator', 'editor', 'manager'];
+            const isAdmin = adminRoles.includes(user.role);
+
+            let dropdownHTML = `
+                <li><a href="/profile.html"><i class="fas fa-user-circle"></i> الملف الشخصي</a></li>
+            `;
+            
+            if (isAdmin) {
+                dropdownHTML += `
+                    <li><a href="/dashboard.html"><i class="fas fa-tachometer-alt"></i> It7ad Panel</a></li>
+                `;
+            }
+
+            dropdownHTML += `
+                <li class="divider"></li>
+                <li><a href="#" id="logout-btn"><i class="fas fa-sign-out-alt"></i> تسجيل الخروج</a></li>
+            `;
+
+            navbarContainer.innerHTML = `
+                <nav class="navbar">
+                    <div class="navbar-brand">
+                        <img src="https://moglitch.alwaysdata.net/content/uploads/photos/2025/09/it7ad_2606da4f720c447e46a6662c8f20a2a1.png" alt="Logo">
+                    </div>
+                    <ul class="navbar-links">
+                        <li><a href="/student/home.html">الرئيسية</a></li>
+                        <li><a href="/student/news.html">الأخبار</a></li>
+                        <li><a href="/student/events.html">الفعاليات</a></li>
+                        <li><a href="/student/complaints.html">الشكاوى</a></li>
+                    </ul>
+                    <div class="navbar-profile">
+                        <button class="navbar-profile-btn" id="profile-btn">
+                            <img src="${user.profile_image_url || '/uploads/avatars/default.png'}" alt="Profile" class="navbar-profile-img">
+                        </button>
+                        <ul class="profile-dropdown" id="profile-dropdown">
+                            ${dropdownHTML}
+                        </ul>
+                    </div>
+                </nav>
+            `;
+            
+            // Add event listeners for the new navbar
+            const profileBtn = document.getElementById('profile-btn');
+            const profileDropdown = document.getElementById('profile-dropdown');
+            profileBtn.addEventListener('click', () => {
+                profileDropdown.classList.toggle('show');
+            });
+            document.getElementById('logout-btn').addEventListener('click', logout);
+
+            // Hide dropdown if clicked outside
+            window.addEventListener('click', (e) => {
+                if (!profileBtn.contains(e.target) && !profileDropdown.contains(e.target)) {
+                    profileDropdown.classList.remove('show');
+                }
+            });
+        }
+        
+        async function loadProfileData() {
+            try {
+                const res = await fetch('/api/profile/me', { headers: { 'Authorization': `Bearer ${token}` } });
+                if (!res.ok) throw new Error('Failed to load profile data');
+                const { user, activities } = await res.json();
+                
+                document.getElementById('profile-picture-img').src = user.profile_image_url || '/uploads/avatars/default.png';
+                document.getElementById('user-fullname').textContent = user.full_name;
+                document.getElementById('user-username').textContent = `@${user.username}`;
+                document.getElementById('user-email').textContent = user.email;
+                document.getElementById('user-phone').textContent = user.phone_number || 'لم يحدد';
+                document.getElementById('user-academic-year').textContent = academicYearMap[user.academic_year] || user.academic_year;
+                document.getElementById('user-country').textContent = user.country || 'لم تحدد';
+                
+                populateList('events-list', activities.events, formatEvent);
+                populateList('complaints-list', activities.complaints, formatComplaint);
+                populateList('surveys-list', activities.surveys, formatSurvey);
+            } catch (error) {
+                console.error('Error:', error);
+                showNotification('حدث خطأ أثناء تحميل بيانات الملف الشخصي.', 'error');
+            }
+        }
+
+        function populateList(listId, items, formatter) {
+            const listElement = document.getElementById(listId);
+            listElement.innerHTML = '';
+            if (!items || items.length === 0) {
+                listElement.innerHTML = '<li>لا توجد بيانات لعرضها.</li>';
+                return;
+            }
+            items.forEach(item => {
+                const li = document.createElement('li');
+                li.innerHTML = formatter(item);
+                listElement.appendChild(li);
+            });
+        }
+
+        const formatEvent = item => `<div class="activity-icon"><i class="fas fa-calendar-check"></i></div><div class="activity-details"><div class="title">${item.title}</div><div class="meta">تاريخ البدء: ${new Date(item.start_time).toLocaleDateString('ar-EG')}</div></div>`;
+        const formatComplaint = item => `<div class="activity-icon"><i class="fas fa-gavel"></i></div><div class="activity-details"><div class="title">${item.title}</div><div class="meta">الحالة: ${statusMap[item.status] || item.status} | تاريخ الإرسال: ${new Date(item.created_at).toLocaleDateString('ar-EG')}</div></div>`;
+        const formatSurvey = item => `<div class="activity-icon"><i class="fas fa-poll"></i></div><div class="activity-details"><div class="title">${item.title}</div><div class="meta">تاريخ المشاركة: ${new Date(item.submitted_at).toLocaleDateString('ar-EG')}</div></div>`;
+
+        function setupEventListeners() {
+            const tabs = document.querySelectorAll('.tab-button');
+            const tabContents = document.querySelectorAll('.tab-content');
+            tabs.forEach(tab => {
+                tab.addEventListener('click', () => {
+                    tabs.forEach(t => t.classList.remove('active'));
+                    tab.classList.add('active');
+                    tabContents.forEach(c => c.classList.remove('active'));
+                    document.getElementById(tab.dataset.tab).classList.add('active');
+                });
+            });
+
+            document.getElementById('profile_picture_input').addEventListener('change', async (e) => {
+                const file = e.target.files[0];
+                if (!file) return;
+
+                const formData = new FormData();
+                formData.append('profile_picture', file);
+                
+                try {
+                    const res = await fetch('/api/profile/picture', {
+                        method: 'POST',
+                        headers: { 'Authorization': `Bearer ${token}` },
+                        body: formData
+                    });
+                    const result = await res.json();
+                    if (!res.ok) throw new Error(result.message);
+                    document.getElementById('profile-picture-img').src = result.newImageUrl;
+                    // Also update the navbar image
+                    document.querySelector('.navbar-profile-img').src = result.newImageUrl;
+                    showNotification('تم تحديث الصورة الشخصية بنجاح.', 'success');
+                } catch (error) {
+                    showNotification('فشل تحديث الصورة: ' + error.message, 'error');
+                }
+            });
+
+            document.getElementById('passwordChangeForm').addEventListener('submit', async (e) => {
+                e.preventDefault();
+                const oldPassword = document.getElementById('oldPassword').value;
+                const newPassword = document.getElementById('newPassword').value;
+
+                try {
+                    const res = await fetch('/api/profile/password', {
+                        method: 'PUT',
+                        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+                        body: JSON.stringify({ oldPassword, newPassword })
+                    });
+                    const result = await res.json();
+                    if (!res.ok) throw new Error(result.message);
+                    showNotification(result.message, 'success');
+                    e.target.reset();
+                } catch (error) {
+                    showNotification('فشل تحديث كلمة المرور: ' + error.message, 'error');
+                }
+            });
+        }
+
+        function logout() {
+            localStorage.removeItem('authToken');
+            window.location.href = '/login';
+        }
+    </script>
+</body>
+</html>
+

@@ -1,0 +1,193 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>تفاصيل الشكوى - لوحة التحكم</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700&display=swap');
+        :root {
+            --primary-color: #0056b3; --sidebar-bg: #212529; --body-bg: #f4f7f6;
+            --card-bg: #ffffff; --text-color: #333; --light-text: #f8f9fa; --success: #28a745;
+        }
+        body { font-family: 'Cairo', sans-serif; background-color: var(--body-bg); margin: 0; display: flex; }
+        .sidebar { width: 250px; background-color: var(--sidebar-bg); color: var(--light-text); display: flex; flex-direction: column; height: 100vh; position: fixed; }
+        .main-content { margin-right: 250px; width: calc(100% - 250px); padding: 20px; }
+        .container-grid { display: grid; grid-template-columns: 2fr 1fr; gap: 20px; }
+        .card { background-color: var(--card-bg); padding: 20px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
+        .card h2 { margin-top: 0; border-bottom: 1px solid #eee; padding-bottom: 10px; }
+        .complaint-details p { margin: 10px 0; }
+        .complaint-details strong { min-width: 100px; display: inline-block; }
+        .conversation-log { max-height: 500px; overflow-y: auto; }
+        .message-card { margin-bottom: 15px; padding: 15px; border-radius: 8px; }
+        .student-message { background-color: #e9ecef; }
+        .admin-message { background-color: #d1e7dd; }
+        .message-header { font-weight: bold; margin-bottom: 5px; font-size: 0.9rem; }
+        .message-meta { font-size: 0.8rem; color: #6c757d; }
+        .response-form textarea { width: 100%; min-height: 100px; padding: 10px; border-radius: 5px; border: 1px solid #ccc; margin-bottom: 10px; }
+        .response-form button, .status-form button { background-color: var(--primary-color); color: white; border: none; padding: 10px 15px; border-radius: 5px; cursor: pointer; }
+        .status-form select { width: 100%; padding: 10px; margin-bottom: 10px; }
+    </style>
+</head>
+<body>
+    <aside class="sidebar" id="sidebar-container"></aside>
+    <main class="main-content">
+        <h1 id="complaint-title">تفاصيل الشكوى</h1>
+        <div class="container-grid">
+            <div class="left-panel">
+                <div class="card conversation-card">
+                    <h2>سجل المحادثة</h2>
+                    <div class="conversation-log" id="conversation-log">
+                        <!-- Messages will be loaded here -->
+                    </div>
+                </div>
+                <div class="card response-form">
+                    <h2>إضافة رد</h2>
+                    <form id="responseForm">
+                        <textarea id="response-message" placeholder="اكتب ردك هنا..." required></textarea>
+                        <button type="submit">إرسال الرد</button>
+                    </form>
+                </div>
+            </div>
+            <div class="right-panel">
+                <div class="card complaint-details">
+                    <h2>بيانات الشكوى</h2>
+                    <p><strong>مقدم الطلب:</strong> <span id="submitter-name"></span></p>
+                    <p><strong>البريد الإلكتروني:</strong> <span id="submitter-email"></span></p>
+                    <p><strong>الفئة:</strong> <span id="complaint-category"></span></p>
+                    <p><strong>تاريخ الإرسال:</strong> <span id="submission-date"></span></p>
+                </div>
+                <div class="card status-form">
+                    <h2>تحديث الحالة</h2>
+                    <form id="statusForm">
+                        <select id="status-select">
+                            <option value="received">تم الاستلام</option>
+                            <option value="under_review">تحت المراجعة</option>
+                            <option value="pending_student_response">بانتظار رد الطالب</option>
+                            <option value="action_taken">تم اتخاذ إجراء</option>
+                            <option value="closed">مغلقة</option>
+                        </select>
+                        <button type="submit">تحديث</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <script>
+        const token = localStorage.getItem('authToken');
+        const urlParams = new URLSearchParams(window.location.search);
+        const complaintId = urlParams.get('id');
+
+        document.addEventListener('DOMContentLoaded', async () => {
+            if (!token || !complaintId) { window.location.href = '/admin/complaints.html'; return; }
+            loadSidebar();
+            await loadComplaintDetails();
+            
+            document.getElementById('responseForm').addEventListener('submit', postResponse);
+            document.getElementById('statusForm').addEventListener('submit', updateStatus);
+        });
+
+        async function loadComplaintDetails() {
+            try {
+                const res = await fetch(`/api/complaints/${complaintId}`, {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+                if (!res.ok) throw new Error('Failed to fetch details');
+
+                const { complaint, responses } = await res.json();
+                
+                // Populate complaint details
+                document.getElementById('complaint-title').textContent = `تفاصيل الشكوى: ${complaint.title}`;
+                document.getElementById('submitter-name').textContent = complaint.full_name;
+                document.getElementById('submitter-email').textContent = complaint.email;
+                document.getElementById('complaint-category').textContent = complaint.category;
+                document.getElementById('submission-date').textContent = new Date(complaint.created_at).toLocaleString('ar-EG');
+                document.getElementById('status-select').value = complaint.status;
+
+                // Populate conversation log
+                const logContainer = document.getElementById('conversation-log');
+                logContainer.innerHTML = ''; // Clear
+
+                // Add student's original message
+                logContainer.innerHTML += `
+                    <div class="message-card student-message">
+                        <div class="message-header">${complaint.full_name} (الطالب)</div>
+                        <div class="message-body">${complaint.description.replace(/\n/g, '<br>')}</div>
+                        <div class="message-meta">${new Date(complaint.created_at).toLocaleString('ar-EG')}</div>
+                    </div>
+                `;
+
+                // Add admin/moderator responses
+                responses.forEach(r => {
+                    logContainer.innerHTML += `
+                        <div class="message-card admin-message">
+                            <div class="message-header">${r.responder_name} (${r.responder_role})</div>
+                            <div class="message-body">${r.message.replace(/\n/g, '<br>')}</div>
+                            <div class="message-meta">${new Date(r.created_at).toLocaleString('ar-EG')}</div>
+                        </div>
+                    `;
+                });
+                logContainer.scrollTop = logContainer.scrollHeight; // Scroll to bottom
+
+            } catch (error) {
+                console.error("Error loading details:", error);
+                alert('فشل تحميل تفاصيل الشكوى.');
+            }
+        }
+
+        async function postResponse(e) {
+            e.preventDefault();
+            const message = document.getElementById('response-message').value;
+            if (!message.trim()) return;
+
+            try {
+                const res = await fetch(`/api/complaints/${complaintId}/responses`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+                    body: JSON.stringify({ message })
+                });
+                const result = await res.json();
+                if (!res.ok) throw new Error(result.message);
+                
+                document.getElementById('response-message').value = '';
+                await loadComplaintDetails(); // Refresh conversation
+            } catch (error) {
+                alert('فشل إرسال الرد: ' + error.message);
+            }
+        }
+
+        async function updateStatus(e) {
+            e.preventDefault();
+            const status = document.getElementById('status-select').value;
+            try {
+                const res = await fetch(`/api/complaints/${complaintId}/status`, {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+                    body: JSON.stringify({ status })
+                });
+                const result = await res.json();
+                if (!res.ok) throw new Error(result.message);
+                
+                alert('تم تحديث الحالة بنجاح.');
+            } catch (error) {
+                alert('فشل تحديث الحالة: ' + error.message);
+            }
+        }
+
+        function loadSidebar() {
+             document.getElementById('sidebar-container').innerHTML = `
+                <div class="sidebar-header"><h3>لوحة التحكم</h3></div>
+                <ul class="sidebar-nav">
+                    <li><a href="/dashboard.html"><i class="fas fa-tachometer-alt"></i> الرئيسية</a></li>
+                    <li><a href="/admin/users.html"><i class="fas fa-users"></i> إدارة المستخدمين</a></li>
+                    <li><a href="/admin/content.html"><i class="fas fa-newspaper"></i> إدارة المحتوى</a></li>
+                    <li><a href="/admin/events.html"><i class="fas fa-calendar-alt"></i> إدارة الفعاليات</a></li>
+                    <li><a href="/admin/surveys.html"><i class="fas fa-poll"></i> إدارة الاستطلاعات</a></li>
+                    <li><a href="/admin/complaints.html" class="active"><i class="fas fa-gavel"></i> الشكاوى والمقترحات</a></li>
+                </ul>`;
+        }
+    </script>
+</body>
+</html>

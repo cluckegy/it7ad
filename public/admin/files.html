@@ -1,0 +1,188 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>إدارة الملفات - لوحة التحكم</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700&display=swap');
+        :root {
+            --primary-color: #0056b3; --sidebar-bg: #212529; --body-bg: #f4f7f6;
+            --card-bg: #ffffff; --text-color: #333; --light-text: #f8f9fa; --danger: #dc3545; --success: #28a745;
+        }
+        body { font-family: 'Cairo', sans-serif; background-color: var(--body-bg); margin: 0; display: flex; }
+        .sidebar { width: 250px; background-color: var(--sidebar-bg); color: var(--light-text); display: flex; flex-direction: column; height: 100vh; position: fixed; }
+        .sidebar-header { padding: 20px; text-align: center; border-bottom: 1px solid #444; }
+        .sidebar-nav { flex-grow: 1; list-style: none; padding: 20px 0; margin: 0; }
+        .sidebar-nav li a { display: block; padding: 15px 20px; color: var(--light-text); text-decoration: none; transition: background-color 0.3s; }
+        .sidebar-nav li a:hover, .sidebar-nav li a.active { background-color: var(--primary-color); }
+        .sidebar-nav li a i { margin-left: 10px; }
+        .main-content { margin-right: 250px; width: calc(100% - 250px); padding: 20px; }
+        .content-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
+        .card { background-color: var(--card-bg); padding: 20px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
+        .upload-form { margin-bottom: 20px; }
+        .form-group { margin-bottom: 15px; }
+        .form-group label { display: block; font-weight: 600; margin-bottom: 5px; }
+        .form-group input[type="text"] { width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 5px; box-sizing: border-box; }
+        .custom-file-upload { border: 2px dashed #ccc; border-radius: 5px; padding: 20px; text-align: center; cursor: pointer; }
+        .custom-file-upload:hover { border-color: var(--primary-color); }
+        .custom-file-upload .icon { font-size: 2rem; color: #777; }
+        .custom-file-upload .text { margin-top: 10px; }
+        #file-name-display { margin-top: 10px; font-style: italic; color: #555; }
+        input[type="file"] { display: none; }
+        .upload-btn { background-color: var(--success); color: white; padding: 10px 20px; border: none; border-radius: 5px; cursor: pointer; }
+        .data-table { width: 100%; border-collapse: collapse; background-color: var(--card-bg); box-shadow: 0 2px 4px rgba(0,0,0,0.1); border-radius: 8px; overflow: hidden; }
+        .data-table th, .data-table td { padding: 15px; text-align: right; border-bottom: 1px solid #dee2e6; }
+        .data-table th { background-color: #f8f9fa; }
+        .data-table tbody tr:hover { background-color: #f1f1f1; }
+        .action-btn { background: none; border: none; cursor: pointer; color: var(--danger); font-size: 1.2rem; }
+    </style>
+</head>
+<body>
+    <aside class="sidebar" id="sidebar-container"></aside>
+    <main class="main-content">
+        <div class="content-header">
+            <h1>إدارة الملفات القابلة للتحميل</h1>
+        </div>
+        <div class="card upload-form">
+            <h2>رفع ملف جديد</h2>
+            <form id="uploadForm">
+                <div class="form-group">
+                    <label for="file_name">اسم الملف (اختياري، إذا ترك فارغًا سيستخدم اسم الملف الأصلي)</label>
+                    <input type="text" id="file_name" name="file_name" placeholder="مثال: الجدول الدراسي للفرقة الأولى">
+                </div>
+                <div class="form-group">
+                    <label for="file-upload" class="custom-file-upload">
+                        <div class="icon"><i class="fas fa-cloud-upload-alt"></i></div>
+                        <div class="text">انقر هنا أو قم بسحب الملف</div>
+                    </label>
+                    <input id="file-upload" name="downloadable_file" type="file" required/>
+                    <div id="file-name-display"></div>
+                </div>
+                <button type="submit" class="upload-btn">رفع الملف</button>
+            </form>
+        </div>
+        <div class="card">
+            <table class="data-table">
+                <thead>
+                    <tr>
+                        <th>اسم الملف</th>
+                        <th>النوع</th>
+                        <th>الحجم</th>
+                        <th>قام بالرفع</th>
+                        <th>تاريخ الرفع</th>
+                        <th>الإجراءات</th>
+                    </tr>
+                </thead>
+                <tbody id="files-tbody"></tbody>
+            </table>
+        </div>
+    </main>
+    <script>
+        const token = localStorage.getItem('authToken');
+        const filesTbody = document.getElementById('files-tbody');
+        const uploadForm = document.getElementById('uploadForm');
+        const fileInput = document.getElementById('file-upload');
+        const fileNameDisplay = document.getElementById('file-name-display');
+
+        document.addEventListener('DOMContentLoaded', () => {
+            if (!token) { window.location.href = '/login'; return; }
+            loadSidebar();
+            loadFiles();
+        });
+
+        fileInput.addEventListener('change', () => {
+            fileNameDisplay.textContent = fileInput.files.length > 0 ? `الملف المحدد: ${fileInput.files[0].name}` : '';
+        });
+
+        uploadForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const formData = new FormData(uploadForm);
+            try {
+                const res = await fetch('/api/files', {
+                    method: 'POST',
+                    headers: { 'Authorization': `Bearer ${token}` },
+                    body: formData
+                });
+                const result = await res.json();
+                alert(result.message);
+                if (res.ok) {
+                    uploadForm.reset();
+                    fileNameDisplay.textContent = '';
+                    loadFiles();
+                }
+            } catch (error) {
+                console.error('Error uploading file:', error);
+                alert('فشل رفع الملف.');
+            }
+        });
+
+        async function loadFiles() {
+            try {
+                const res = await fetch('/api/files', { headers: { 'Authorization': `Bearer ${token}` } });
+                if (!res.ok) throw new Error('Failed to fetch files');
+                
+                const files = await res.json();
+                filesTbody.innerHTML = '';
+                
+                if (files.length === 0) {
+                    filesTbody.innerHTML = '<tr><td colspan="6" style="text-align: center;">لا يوجد ملفات مرفوعة حاليًا.</td></tr>';
+                    return;
+                }
+                
+                files.forEach(file => {
+                    const tr = document.createElement('tr');
+                    tr.innerHTML = `
+                        <td>${file.file_name}</td>
+                        <td>${file.file_type}</td>
+                        <td>${(file.file_size_kb / 1024).toFixed(2)} MB</td>
+                        <td>${file.uploader_name}</td>
+                        <td>${new Date(file.created_at).toLocaleDateString('ar-EG')}</td>
+                        <td>
+                            <button class="action-btn" onclick="deleteFile(${file.id})">
+                                <i class="fas fa-trash-alt"></i>
+                            </button>
+                        </td>
+                    `;
+                    filesTbody.appendChild(tr);
+                });
+            } catch (error) {
+                console.error('Error loading files:', error);
+                filesTbody.innerHTML = '<tr><td colspan="6" style="text-align: center;">فشل في تحميل البيانات.</td></tr>';
+            }
+        }
+
+        async function deleteFile(id) {
+            if (!confirm('هل أنت متأكد من حذف هذا الملف؟ لا يمكن التراجع عن هذا الإجراء.')) return;
+
+            try {
+                const res = await fetch(`/api/files/${id}`, {
+                    method: 'DELETE',
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+                const result = await res.json();
+                alert(result.message);
+                if (res.ok) loadFiles();
+            } catch (error) {
+                console.error('Error deleting file:', error);
+                alert('فشل حذف الملف.');
+            }
+        }
+        
+        function loadSidebar() {
+             document.getElementById('sidebar-container').innerHTML = `
+                <div class="sidebar-header"><h3>لوحة التحكم</h3></div>
+                <ul class="sidebar-nav">
+                    <li><a href="/dashboard.html"><i class="fas fa-tachometer-alt"></i> الرئيسية</a></li>
+                    <li><a href="/admin/users.html"><i class="fas fa-users"></i> إدارة المستخدمين</a></li>
+                    <li><a href="/admin/content.html"><i class="fas fa-newspaper"></i> إدارة المحتوى</a></li>
+                    <li><a href="/admin/events.html"><i class="fas fa-calendar-alt"></i> إدارة الفعاليات</a></li>
+                    <li><a href="/admin/surveys.html"><i class="fas fa-poll"></i> إدارة الاستطلاعات</a></li>
+                    <li><a href="/admin/complaints.html"><i class="fas fa-gavel"></i> الشكاوى والمقترحات</a></li>
+                    <li><a href="/admin/files.html" class="active"><i class="fas fa-file-download"></i> إدارة الملفات</a></li>
+                </ul>`;
+        }
+    </script>
+</body>
+</html>

@@ -1,0 +1,335 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>محرر الاستطلاع - لوحة التحكم</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700&display=swap');
+        :root {
+            --primary-color: #0056b3; --sidebar-bg: #212529; --body-bg: #f4f7f6;
+            --card-bg: #ffffff; --text-color: #333; --light-text: #f8f9fa; --success: #28a745; --danger: #dc3545;
+            --border-color: #dee2e6; --info-bg: #e6f7ff; --info-border: #91d5ff;
+        }
+        body { font-family: 'Cairo', sans-serif; background-color: var(--body-bg); margin: 0; display: flex; }
+        .sidebar { width: 250px; background-color: var(--sidebar-bg); color: var(--light-text); display: flex; flex-direction: column; height: 100vh; position: fixed; }
+        .main-content { margin-right: 250px; width: calc(100% - 250px); padding: 20px; }
+        .editor-container { background: var(--card-bg); padding: 20px 30px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
+        .form-group { margin-bottom: 20px; }
+        .form-group label { display: block; font-weight: 600; margin-bottom: 8px; }
+        .form-group input, .form-group select, .form-group textarea { width: 100%; padding: 10px; border-radius: 5px; border: 1px solid var(--border-color); box-sizing: border-box; }
+        .questions-area { margin-top: 30px; border-top: 1px solid var(--border-color); padding-top: 20px; }
+        
+        .question-card { background: #fff; border: 1px solid var(--border-color); border-radius: 8px; margin-bottom: 20px; box-shadow: 0 1px 3px rgba(0,0,0,0.05); overflow: hidden; }
+        .question-header { display: flex; align-items: center; padding: 15px; background-color: #f8f9fa; border-bottom: 1px solid var(--border-color); }
+        .question-title { margin: 0; font-size: 1.1rem; flex-shrink: 0; }
+        .question-input-group { flex-grow: 1; margin: 0 15px; }
+        .question-input-group input { width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 5px; height: 42px; box-sizing: border-box; font-size: 0.95rem; }
+        .question-actions { display: flex; align-items: center; }
+        .remove-question-btn { color: var(--danger); cursor: pointer; font-size: 1.3rem; margin-left: 15px; }
+        .question-body { padding: 20px; }
+        .options-container { margin-top: 10px; padding-right: 20px; }
+        .option-item { display: flex; align-items: center; margin-bottom: 10px; }
+        .option-item input { flex-grow: 1; border-radius: 5px; border: 1px solid #ccc; padding: 8px; }
+        .remove-option-btn { margin-right: 15px; color: #888; cursor: pointer; font-size: 1.1rem; }
+        .add-option-btn { background-color: #e9ecef; color: #495057; border: none; padding: 8px 12px; border-radius: 5px; cursor: pointer; margin-top: 10px; font-weight: 600; }
+        .add-question-btn { background-color: var(--primary-color); color: white; border: none; width: 100%; padding: 12px; border-radius: 5px; cursor: pointer; font-size: 1rem; font-weight: 600; }
+        .form-actions { margin-top: 20px; text-align: left; }
+        .save-btn { background-color: var(--success); color: white; padding: 12px 25px; border: none; border-radius: 5px; cursor: pointer; font-size: 1rem; font-weight: 600; }
+        
+        /* --- New Toggle Button Group Styles --- */
+        .question-type-toggle {
+            display: flex;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            overflow: hidden;
+            height: 42px;
+            box-sizing: border-box;
+            flex-shrink: 0;
+        }
+        .question-type-toggle button {
+            background-color: #fff;
+            border: none;
+            padding: 0 15px;
+            cursor: pointer;
+            color: #555;
+            font-size: 0.9rem;
+            font-family: 'Cairo', sans-serif;
+            transition: background-color 0.2s, color 0.2s;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+        .question-type-toggle button:not(:last-child) {
+            border-left: 1px solid #ccc;
+        }
+        .question-type-toggle button.active {
+            background-color: var(--primary-color);
+            color: white;
+        }
+        .question-type-toggle button:hover:not(.active) {
+            background-color: #f0f0f0;
+        }
+
+        /* --- Autosave Notification Styles --- */
+        #autosave-notification { display: none; padding: 15px; margin-bottom: 20px; background-color: var(--info-bg); border: 1px solid var(--info-border); border-radius: 5px; text-align: center; }
+        #autosave-notification button { padding: 5px 15px; border-radius: 4px; cursor: pointer; font-weight: 600; margin: 0 5px; }
+        #restore-btn { background-color: var(--success); color: white; border: 1px solid var(--success); }
+        #discard-btn { background-color: transparent; color: var(--danger); border: 1px solid var(--danger); }
+    </style>
+</head>
+<body>
+    <aside class="sidebar" id="sidebar-container"></aside>
+    <main class="main-content">
+        <h1 id="page-title">إنشاء استطلاع جديد</h1>
+        <div class="editor-container">
+            <div id="autosave-notification">
+                <span>يوجد لديك عمل غير محفوظ. هل تريد استعادته؟</span>
+                <button id="restore-btn">استعادة</button>
+                <button id="discard-btn">تجاهل</button>
+            </div>
+            <form id="survey-form">
+                <div class="form-group">
+                    <label for="title">عنوان الاستطلاع</label>
+                    <input type="text" id="title" name="title" required>
+                </div>
+                <div class="form-group">
+                    <label for="description">الوصف (اختياري)</label>
+                    <textarea id="description" name="description" rows="3"></textarea>
+                </div>
+                 <div class="form-group">
+                    <label for="status">الحالة</label>
+                    <select id="status" name="status">
+                        <option value="draft">مسودة</option>
+                        <option value="active">نشط</option>
+                    </select>
+                </div>
+
+                <div class="questions-area">
+                    <h3>الأسئلة</h3>
+                    <div id="questions-container"></div>
+                    <button type="button" class="add-question-btn" onclick="addQuestion()">
+                        <i class="fas fa-plus"></i> إضافة سؤال جديد
+                    </button>
+                </div>
+
+                <div class="form-actions">
+                    <button type="submit" class="save-btn">حفظ الاستطلاع</button>
+                </div>
+            </form>
+        </div>
+    </main>
+    <script>
+        const token = localStorage.getItem('authToken');
+        const surveyForm = document.getElementById('survey-form');
+        const questionsContainer = document.getElementById('questions-container');
+        let questionCounter = 0;
+        const AUTOSAVE_KEY = 'autosavedSurvey';
+
+        // --- Core Functions ---
+        document.addEventListener('DOMContentLoaded', () => {
+            if (!token) { window.location.href = '/login'; return; }
+            loadSidebar();
+            checkForSavedProgress();
+            surveyForm.addEventListener('input', saveProgress);
+        });
+
+        // --- Autosave and Restore Logic ---
+        function saveProgress() {
+            const surveyData = {
+                title: document.getElementById('title').value,
+                description: document.getElementById('description').value,
+                status: document.getElementById('status').value,
+                questions: []
+            };
+            const questionCards = document.querySelectorAll('.question-card');
+            for (const card of questionCards) {
+                const activeButton = card.querySelector('.question-type-toggle button.active');
+                const question = {
+                    question_text: card.querySelector('.question-input-group input').value,
+                    question_type: activeButton ? activeButton.dataset.type : 'text',
+                    options: []
+                };
+                if (question.question_type !== 'text') {
+                    const optionInputs = card.querySelectorAll('.option-item input');
+                    optionInputs.forEach(input => question.options.push(input.value));
+                }
+                surveyData.questions.push(question);
+            }
+            localStorage.setItem(AUTOSAVE_KEY, JSON.stringify(surveyData));
+        }
+
+        function checkForSavedProgress() {
+            const savedData = localStorage.getItem(AUTOSAVE_KEY);
+            if (savedData) {
+                const notification = document.getElementById('autosave-notification');
+                notification.style.display = 'block';
+                document.getElementById('restore-btn').onclick = () => restoreProgress(JSON.parse(savedData));
+                document.getElementById('discard-btn').onclick = discardProgress;
+            } else {
+                addQuestion(); // Start with one question if no saved data
+            }
+        }
+        
+        function restoreProgress(data) {
+            document.getElementById('title').value = data.title || '';
+            document.getElementById('description').value = data.description || '';
+            document.getElementById('status').value = data.status || 'draft';
+            
+            questionsContainer.innerHTML = ''; // Clear existing questions
+            data.questions.forEach(q => {
+                addQuestion({ restoreData: q });
+            });
+
+            document.getElementById('autosave-notification').style.display = 'none';
+        }
+        
+        function discardProgress() {
+            localStorage.removeItem(AUTOSAVE_KEY);
+            document.getElementById('autosave-notification').style.display = 'none';
+            if (questionsContainer.children.length === 0) addQuestion();
+        }
+
+        // --- Question and Option Management ---
+        function updateQuestionNumbers() {
+            const questionCards = document.querySelectorAll('.question-card');
+            questionCards.forEach((card, index) => {
+                card.querySelector('.question-title').textContent = `سؤال ${index + 1}`;
+            });
+        }
+
+        function addQuestion({ restoreData = null } = {}) {
+            const questionId = `q_${++questionCounter}`;
+            const newQuestion = document.createElement('div');
+            newQuestion.className = 'question-card';
+            newQuestion.id = questionId;
+            newQuestion.innerHTML = `
+                <div class="question-header">
+                    <h4 class="question-title"></h4>
+                    <div class="question-input-group">
+                        <input type="text" placeholder="اكتب سؤالك هنا" required>
+                    </div>
+                    <div class="question-actions">
+                        <div class="question-type-toggle">
+                            <button type="button" class="active" data-type="text"><i class="fas fa-font"></i> نصية</button>
+                            <button type="button" data-type="single_choice"><i class="fas fa-dot-circle"></i> اختيار واحد</button>
+                            <button type="button" data-type="multiple_choice"><i class="fas fa-check-square"></i> اختيارات</button>
+                        </div>
+                        <i class="fas fa-trash-alt remove-question-btn" onclick="removeQuestion('${questionId}')"></i>
+                    </div>
+                </div>
+                <div class="question-body" style="display: none;">
+                    <div class="options-container"></div>
+                    <button type="button" class="add-option-btn" onclick="addOption('${questionId}')"><i class="fas fa-plus"></i> إضافة خيار</button>
+                </div>
+            `;
+            questionsContainer.appendChild(newQuestion);
+            
+            // Add event listeners to the new toggle buttons
+            const toggleButtons = newQuestion.querySelector('.question-type-toggle');
+            toggleButtons.addEventListener('click', (e) => {
+                const clickedButton = e.target.closest('button');
+                if (!clickedButton) return;
+
+                toggleButtons.querySelectorAll('button').forEach(btn => btn.classList.remove('active'));
+                clickedButton.classList.add('active');
+                questionTypeChanged(questionId, clickedButton.dataset.type);
+            });
+
+            if(restoreData) {
+                newQuestion.querySelector('.question-input-group input').value = restoreData.question_text;
+                const activeButton = newQuestion.querySelector(`.question-type-toggle button[data-type="${restoreData.question_type}"]`);
+                if (activeButton) {
+                    toggleButtons.querySelectorAll('button').forEach(btn => btn.classList.remove('active'));
+                    activeButton.classList.add('active');
+                    questionTypeChanged(questionId, restoreData.question_type);
+                }
+                restoreData.options.forEach(optText => addOption(questionId, optText));
+            }
+            updateQuestionNumbers();
+        }
+
+        function removeQuestion(questionId) {
+            document.getElementById(questionId).remove();
+            updateQuestionNumbers();
+            saveProgress(); // Save after removing a question
+        }
+
+        function questionTypeChanged(questionId, questionType) {
+            const questionCard = document.getElementById(questionId);
+            const questionBody = questionCard.querySelector('.question-body');
+            const optionsContainer = questionCard.querySelector('.options-container');
+
+            if (questionType === 'single_choice' || questionType === 'multiple_choice') {
+                questionBody.style.display = 'block';
+                if (optionsContainer.children.length === 0) {
+                    // MODIFIED LOGIC HERE
+                    if (questionType === 'multiple_choice') {
+                        addOption(questionId); // 1
+                        addOption(questionId); // 2
+                        addOption(questionId); // 3
+                    } else { // for 'single_choice'
+                        addOption(questionId); // 1
+                        addOption(questionId); // 2
+                    }
+                }
+            } else {
+                questionBody.style.display = 'none';
+            }
+        }
+
+        function addOption(questionId, optionText = '') {
+            const optionsContainer = document.getElementById(questionId).querySelector('.options-container');
+            const newOption = document.createElement('div');
+            newOption.className = 'option-item';
+            newOption.innerHTML = `
+                <i class="fas fa-times-circle remove-option-btn" onclick="this.parentElement.remove(); saveProgress();"></i>
+                <input type="text" placeholder="نص الخيار" required value="${optionText}">
+            `;
+            optionsContainer.appendChild(newOption);
+        }
+        
+        // --- Form Submission ---
+        surveyForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            saveProgress(); // Ensure latest data is saved before submitting
+            const surveyDataString = localStorage.getItem(AUTOSAVE_KEY);
+            if (!surveyDataString) {
+                alert("لا يوجد بيانات للحفظ.");
+                return;
+            }
+            try {
+                const res = await fetch('/api/surveys', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+                    body: surveyDataString
+                });
+                const result = await res.json();
+                alert(result.message);
+                if (res.ok) {
+                    localStorage.removeItem(AUTOSAVE_KEY); // Clear autosave on success
+                    window.location.href = '/admin/surveys.html';
+                }
+            } catch (error) {
+                console.error('Error submitting survey:', error);
+                alert('An error occurred.');
+            }
+        });
+
+        // --- Sidebar ---
+        function loadSidebar() {
+             document.getElementById('sidebar-container').innerHTML = `
+                <div class="sidebar-header"><h3>لوحة التحكم</h3></div>
+                <ul class="sidebar-nav">
+                    <li><a href="/dashboard.html"><i class="fas fa-tachometer-alt"></i> الرئيسية</a></li>
+                    <li><a href="/admin/users.html"><i class="fas fa-users"></i> إدارة المستخدمين</a></li>
+                    <li><a href="/admin/content.html"><i class="fas fa-newspaper"></i> إدارة المحتوى</a></li>
+                    <li><a href="/admin/events.html"><i class="fas fa-calendar-alt"></i> إدارة الفعاليات</a></li>
+                    <li><a href="/admin/surveys.html" class="active"><i class="fas fa-poll"></i> إدارة الاستطلاعات</a></li>
+                </ul>`;
+        }
+    </script>
+</body>
+</html>
+

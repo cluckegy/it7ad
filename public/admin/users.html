@@ -1,0 +1,258 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>إدارة المستخدمين - لوحة التحكم</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700&display=swap');
+        :root {
+            --primary-color: #0056b3; --sidebar-bg: #212529; --body-bg: #f4f7f6;
+            --card-bg: #ffffff; --text-color: #333; --light-text: #f8f9fa;
+            --success: #28a745; --danger: #dc3545; --warning: #ffc107;
+        }
+        body { font-family: 'Cairo', sans-serif; background-color: var(--body-bg); margin: 0; display: flex; }
+        .sidebar { width: 250px; background-color: var(--sidebar-bg); color: var(--light-text); display: flex; flex-direction: column; height: 100vh; position: fixed; }
+        .sidebar-header { padding: 20px; text-align: center; border-bottom: 1px solid #444; }
+        .sidebar-header h3 { margin: 0; }
+        .sidebar-nav { flex-grow: 1; list-style: none; padding: 20px 0; margin: 0; }
+        .sidebar-nav li a { display: block; padding: 15px 20px; color: var(--light-text); text-decoration: none; transition: background 0.3s; }
+        .sidebar-nav li a:hover, .sidebar-nav li a.active { background-color: var(--primary-color); }
+        .sidebar-nav li a i { margin-left: 10px; }
+        .main-content { margin-right: 250px; width: calc(100% - 250px); padding: 20px; }
+        header { display: flex; justify-content: space-between; align-items: center; background: var(--card-bg); padding: 15px 20px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); margin-bottom: 20px; }
+        .main-header h1 { margin: 0; font-size: 1.8rem; }
+        .table-container { background: var(--card-bg); padding: 20px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
+        table { width: 100%; border-collapse: collapse; }
+        th, td { padding: 12px 15px; text-align: right; border-bottom: 1px solid #ddd; }
+        th { background-color: #f2f2f2; font-weight: 700; }
+        .status-banned { color: var(--danger); font-weight: 600; }
+        .status-active { color: var(--success); font-weight: 600; }
+        .role-badge { padding: 4px 8px; border-radius: 12px; color: white; font-size: 0.8rem; }
+        .role-super_admin { background-color: var(--danger); }
+        .role-admin { background-color: var(--warning); color: #333; }
+        .role-moderator { background-color: #17a2b8; }
+        .role-editor { background-color: #6f42c1; }
+        .role-student { background-color: #6c757d; }
+        .action-btn { background: none; border: none; cursor: pointer; font-size: 1rem; margin: 0 5px; }
+        .edit-btn { color: var(--primary-color); }
+        /* Modal Styles */
+        .modal { display: none; position: fixed; z-index: 1000; left: 0; top: 0; width: 100%; height: 100%; overflow: auto; background-color: rgba(0,0,0,0.5); }
+        .modal-content { background-color: #fefefe; margin: 10% auto; padding: 20px; border: 1px solid #888; width: 80%; max-width: 500px; border-radius: 8px; }
+        .close-btn { color: #aaa; float: left; font-size: 28px; font-weight: bold; cursor: pointer; }
+        .form-group { margin-bottom: 15px; }
+        .form-group label { display: block; margin-bottom: 5px; }
+        .form-group select, .form-group input, .form-group textarea { width: 100%; padding: 8px; border-radius: 4px; border: 1px solid #ccc; }
+        .modal-actions { text-align: left; }
+        .save-btn { background-color: var(--success); color: white; padding: 10px 20px; border: none; border-radius: 5px; cursor: pointer; }
+    </style>
+</head>
+<body>
+
+    <aside class="sidebar" id="sidebar-container">
+        <!-- Sidebar will be loaded by JS -->
+    </aside>
+
+    <main class="main-content">
+        <header class="main-header">
+            <h1>إدارة المستخدمين</h1>
+        </header>
+        
+        <div class="table-container">
+            <table id="users-table">
+                <thead>
+                    <tr>
+                        <th>الاسم الكامل</th>
+                        <th>البريد الإلكتروني</th>
+                        <th>الدور</th>
+                        <th>الحالة</th>
+                        <th>إجراءات</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <!-- User rows will be loaded by JS -->
+                </tbody>
+            </table>
+        </div>
+    </main>
+
+    <!-- Edit User Modal -->
+    <div id="edit-user-modal" class="modal">
+        <div class="modal-content">
+            <span class="close-btn">&times;</span>
+            <h2 id="modal-title">تعديل بيانات المستخدم</h2>
+            <form id="edit-user-form">
+                <input type="hidden" id="edit-user-id">
+                <div class="form-group">
+                    <label for="edit-role">الدور</label>
+                    <select id="edit-role" name="role">
+                        <option value="student">Student</option>
+                        <option value="editor">Editor</option>
+                        <option value="moderator">Moderator</option>
+                        <option value="admin">Admin</option>
+                        <option value="super_admin">Super Admin</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>حالة الحظر</label>
+                    <div>
+                        <input type="radio" id="edit-banned-false" name="is_banned" value="false" checked> <label for="edit-banned-false">نشط</label>
+                        <input type="radio" id="edit-banned-true" name="is_banned" value="true"> <label for="edit-banned-true">محظور</label>
+                    </div>
+                </div>
+                 <div class="form-group" id="ban-reason-group" style="display: none;">
+                    <label for="edit-ban-reason">سبب الحظر (اختياري)</label>
+                    <textarea id="edit-ban-reason" name="ban_reason" rows="3"></textarea>
+                </div>
+                <div class="modal-actions">
+                    <button type="submit" class="save-btn">حفظ التغييرات</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        const token = localStorage.getItem('authToken');
+        let currentUserRole = ''; // To store the logged-in user's role
+
+        // --- Sidebar & Auth ---
+        document.addEventListener('DOMContentLoaded', async () => {
+            if (!token) {
+                window.location.href = '/login';
+                return;
+            }
+            await loadSidebar();
+            await fetchUsers();
+        });
+
+        async function loadSidebar() {
+            try {
+                const response = await fetch('/api/dashboard', { headers: { 'Authorization': `Bearer ${token}` } });
+                if (!response.ok) throw new Error('Failed to fetch user data');
+                const data = await response.json();
+                currentUserRole = data.user.role; // Store current user's role
+
+                const sidebarNav = `
+                    <div class="sidebar-header"><h3>اتحاد الطلاب</h3></div>
+                    <ul class="sidebar-nav">
+                        <li><a href="/dashboard"><i class="fa-solid fa-house"></i> الرئيسية</a></li>
+                        ${getNavLinksByRole(data.user.role)}
+                    </ul>`;
+                document.getElementById('sidebar-container').innerHTML = sidebarNav;
+            } catch (error) {
+                console.error(error);
+                window.location.href = '/login';
+            }
+        }
+
+        function getNavLinksByRole(role) {
+             const rolesNav = {
+                super_admin: `
+                    <li><a href="/admin/users" class="active"><i class="fa-solid fa-users-gear"></i> إدارة المستخدمين</a></li>
+                    <li><a href="#"><i class="fa-solid fa-file-lines"></i> إدارة المحتوى</a></li>
+                    <li><a href="#"><i class="fa-solid fa-gear"></i> إعدادات الموقع</a></li>
+                `,
+                admin: `
+                    <li><a href="/admin/users" class="active"><i class="fa-solid fa-users"></i> إدارة المستخدمين</a></li>
+                    <li><a href="#"><i class="fa-solid fa-file-lines"></i> إدارة المحتوى</a></li>
+                `,
+            };
+            return rolesNav[role] || '';
+        }
+
+        // --- User Fetching & Rendering ---
+        async function fetchUsers() {
+            try {
+                const response = await fetch('/api/users', { headers: { 'Authorization': `Bearer ${token}` } });
+                if (!response.ok) throw new Error('Failed to fetch users');
+                const users = await response.json();
+                renderUsersTable(users);
+            } catch (error) {
+                console.error(error);
+                document.querySelector('#users-table tbody').innerHTML = `<tr><td colspan="5">خطأ في تحميل البيانات.</td></tr>`;
+            }
+        }
+        
+        function renderUsersTable(users) {
+            const tbody = document.querySelector('#users-table tbody');
+            tbody.innerHTML = users.map(user => `
+                <tr>
+                    <td>${user.full_name}</td>
+                    <td>${user.email}</td>
+                    <td><span class="role-badge role-${user.role}">${user.role}</span></td>
+                    <td>
+                        <span class="status-${user.is_banned ? 'banned' : 'active'}">
+                            ${user.is_banned ? 'محظور' : 'نشط'}
+                        </span>
+                    </td>
+                    <td>
+                        <button class="action-btn edit-btn" onclick="openEditModal('${user.id}', '${user.role}', ${user.is_banned})">
+                            <i class="fa-solid fa-pen-to-square"></i>
+                        </button>
+                    </td>
+                </tr>
+            `).join('');
+        }
+
+        // --- Modal Logic ---
+        const modal = document.getElementById('edit-user-modal');
+        const closeBtn = document.querySelector('.close-btn');
+
+        closeBtn.onclick = () => modal.style.display = 'none';
+        window.onclick = (event) => {
+            if (event.target == modal) modal.style.display = 'none';
+        }
+
+        function openEditModal(id, role, is_banned) {
+            // Prevent admins from editing other admins or super_admins
+            if (currentUserRole === 'admin' && (role === 'admin' || role === 'super_admin')) {
+                alert('ليس لديك صلاحية لتعديل هذا المستخدم.');
+                return;
+            }
+            
+            document.getElementById('edit-user-id').value = id;
+            document.getElementById('edit-role').value = role;
+            document.querySelector(`input[name="is_banned"][value="${is_banned}"]`).checked = true;
+            toggleBanReason(is_banned);
+            
+            modal.style.display = 'block';
+        }
+
+        // Show/hide ban reason field
+        document.querySelectorAll('input[name="is_banned"]').forEach(radio => {
+            radio.addEventListener('change', (e) => toggleBanReason(e.target.value === 'true'));
+        });
+        function toggleBanReason(isBanned) {
+             document.getElementById('ban-reason-group').style.display = isBanned ? 'block' : 'none';
+        }
+
+        // --- Form Submission ---
+        document.getElementById('edit-user-form').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const id = document.getElementById('edit-user-id').value;
+            const role = document.getElementById('edit-role').value;
+            const is_banned = document.querySelector('input[name="is_banned"]:checked').value === 'true';
+            const ban_reason = document.getElementById('edit-ban-reason').value;
+
+            try {
+                const response = await fetch(`/api/users/${id}`, {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+                    body: JSON.stringify({ role, is_banned, ban_reason })
+                });
+                const result = await response.json();
+                alert(result.message);
+                
+                if (response.ok) {
+                    modal.style.display = 'none';
+                    fetchUsers(); // Refresh table
+                }
+            } catch (error) {
+                console.error(error);
+                alert('حدث خطأ أثناء تحديث المستخدم.');
+            }
+        });
+    </script>
+</body>
+</html>

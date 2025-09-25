@@ -1,0 +1,189 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>تسجيل الدخول - بوابة اتحاد الطلاب</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700&display=swap');
+        @import url('https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700&display=swap');
+        :root {
+            --primary-color: #0056b3; --body-bg: #f8f9fa; --form-bg: #ffffff;
+            --text-color: #333; --border-color: #dee2e6; --danger: #dc3545;
+            --font-ar: 'Cairo', sans-serif; --font-en: 'Plus Jakarta Sans', sans-serif;
+        }
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body {
+            font-family: var(--font-ar);
+            background-color: var(--body-bg);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            color: var(--text-color);
+        }
+        body.en { font-family: var(--font-en); }
+        .auth-container {
+            display: flex;
+            width: 100%;
+            max-width: 950px;
+            min-height: 600px;
+            background-color: var(--form-bg);
+            border-radius: 12px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+            overflow: hidden;
+        }
+        .auth-panel {
+            flex: 1;
+            padding: 40px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            position: relative;
+        }
+        .auth-welcome-panel {
+            flex: 0.8;
+            background: linear-gradient(to bottom, rgba(0, 86, 179, 0.85), rgba(0, 61, 130, 0.95)), url('https://lh3.googleusercontent.com/gps-cs-s/AC9h4noGTCvoszKUhcpaaAUDOfOtEBQZIPvJmH70eo7_ZmOmTxA0NVr4CQ0G3mNOUQqfn5BwXYkH_OZaMSZBXgP8FhIkvF-qLYAfOPH2iIggXc_FGO5Bq6IKNwzqp7p0p5VJ-fCfUqylRg=s680-w680-h510-rw') center/cover no-repeat;
+            color: white;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            padding: 20px;
+        }
+        .auth-welcome-panel img { width: 100px; margin-bottom: 20px; }
+        .auth-welcome-panel h1 { font-size: 1.8rem; margin-bottom: 10px; }
+        .auth-form {
+            width: 100%;
+            max-width: 380px;
+            margin: 0 auto;
+        }
+        .auth-form h2 { margin-bottom: 10px; font-size: 1.8rem; text-align: center; }
+        .auth-form p { color: #6c757d; margin-bottom: 30px; text-align: center; }
+        .form-group { margin-bottom: 20px; text-align: right; }
+        body.en .form-group { text-align: left; }
+        .form-group label { display: block; font-weight: 600; margin-bottom: 8px; }
+        .form-group input {
+            width: 100%;
+            padding: 12px;
+            border-radius: 5px;
+            border: 1px solid var(--border-color);
+            font-size: 1rem;
+        }
+        .submit-btn {
+            width: 100%;
+            padding: 12px;
+            border: none;
+            border-radius: 8px;
+            background: linear-gradient(45deg, #0056b3, #007bff);
+            color: white;
+            font-size: 1.1rem;
+            font-weight: 700;
+            cursor: pointer;
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+            box-shadow: 0 4px 15px rgba(0, 123, 255, 0.3);
+        }
+        .submit-btn:hover { 
+            transform: translateY(-3px); 
+            box-shadow: 0 7px 20px rgba(0, 123, 255, 0.4); 
+        }
+        .form-footer { margin-top: 25px; text-align: center; color: #6c757d; font-size: 0.95rem; }
+        .form-footer a { color: var(--primary-color); text-decoration: none; font-weight: 600; }
+        .notification { display: none; margin-bottom: 15px; padding: 12px; border-radius: 5px; color: #fff; text-align: center; }
+        .notification.error { background-color: var(--danger); }
+        .lang-switch-container { position: absolute; top: 20px; right: 20px; }
+        .lang-switch { position: relative; display: inline-block; width: 60px; height: 34px; }
+        .lang-switch input { display:none; }
+        .slider { position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: #ccc; transition: .4s; border-radius: 34px; }
+        .slider:before { position: absolute; content: ""; height: 26px; width: 26px; left: 4px; bottom: 4px; background-color: white; transition: .4s; border-radius: 50%; }
+        input:checked + .slider { background-color: var(--primary-color); }
+        input:checked + .slider:before { transform: translateX(26px); }
+        .slider:after { content: 'AR'; color: white; display: block; position: absolute; transform: translate(-50%,-50%); top: 50%; left: 75%; font-size: 10px; }
+        input:checked + .slider:after { content: 'EN'; left: 25%; }
+        @media (max-width: 768px) {
+            .auth-container { flex-direction: column; min-height: auto; }
+            .auth-welcome-panel { display: none; }
+        }
+    </style>
+</head>
+<body>
+    <div class="auth-container">
+        <div class="auth-welcome-panel">
+            <img src="https://moglitch.alwaysdata.net/content/uploads/photos/2025/09/it7ad_2606da4f720c447e46a6662c8f20a2a1.png" alt="Logo">
+            <h1 data-ar="مرحباً في بوابة اتحاد كلية التربية النوعية" data-en="Welcome to The Student Union Portal">مرحباً في بوابة اتحاد كلية التربية النوعية</h1>
+        </div>
+        <div class="auth-panel">
+            <div class="lang-switch-container">
+                <label class="lang-switch">
+                    <input type="checkbox" id="lang-toggle-checkbox">
+                    <span class="slider"></span>
+                </label>
+            </div>
+            <div class="auth-form">
+                <h2 data-ar="تسجيل الدخول" data-en="Sign In">تسجيل الدخول</h2>
+                <p data-ar="مرحباً بعودتك! الرجاء إدخال بياناتك." data-en="Welcome back! Please enter your details.">مرحباً بعودتك! الرجاء إدخال بياناتك.</p>
+                <div id="notification" class="notification"></div>
+                <form id="loginForm">
+                    <div class="form-group">
+                        <label for="identifier" data-ar="البريد الإلكتروني أو اسم المستخدم" data-en="Email or Username">البريد الإلكتروني أو اسم المستخدم</label>
+                        <input type="text" id="identifier" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="password" data-ar="كلمة المرور" data-en="Password">كلمة المرور</label>
+                        <input type="password" id="password" required>
+                    </div>
+                    <button type="submit" class="submit-btn" data-ar="تسجيل الدخول" data-en="Sign In">تسجيل الدخول</button>
+                </form>
+                <div class="form-footer">
+                    <span data-ar="ليس لديك حساب؟" data-en="Don't have an account?">ليس لديك حساب؟</span>
+                    <a href="/register" data-ar="إنشاء حساب" data-en="Sign Up">إنشاء حساب</a>
+                </div>
+            </div>
+        </div>
+    </div>
+    <script>
+        const langToggleCheckbox = document.getElementById('lang-toggle-checkbox');
+        let currentLang = 'ar';
+
+        langToggleCheckbox.addEventListener('change', () => {
+            currentLang = langToggleCheckbox.checked ? 'en' : 'ar';
+            document.body.dir = currentLang === 'ar' ? 'rtl' : 'ltr';
+            document.body.classList.toggle('en', currentLang === 'en');
+            updateUI();
+        });
+
+        function updateUI() {
+            document.querySelectorAll('[data-ar]').forEach(el => {
+                el.textContent = el.dataset[currentLang];
+            });
+        }
+
+        document.getElementById('loginForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            const identifier = document.getElementById('identifier').value;
+            const password = document.getElementById('password').value;
+            const notification = document.getElementById('notification');
+            try {
+                const res = await fetch('/api/auth/login', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ identifier, password })
+                });
+                const data = await res.json();
+                if (!res.ok) {
+                    throw new Error(data.message);
+                }
+                localStorage.setItem('authToken', data.token);
+                window.location.href = '/student/home.html';
+            } catch (error) {
+                notification.textContent = error.message;
+                notification.className = 'notification error';
+                notification.style.display = 'block';
+            }
+        });
+    </script>
+</body>
+</html>
+

@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>إدارة الفعاليات - لوحة التحكم</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css">
+    <style>
+        /* Using the same established dashboard styles */
+        @import url('https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700&display=swap');
+        :root {
+            --primary-color: #0056b3; --sidebar-bg: #212529; --body-bg: #f4f7f6;
+            --card-bg: #ffffff; --text-color: #333; --light-text: #f8f9fa; --danger: #dc3545;
+        }
+        body { font-family: 'Cairo', sans-serif; background-color: var(--body-bg); margin: 0; display: flex; }
+        .sidebar { width: 250px; background-color: var(--sidebar-bg); color: var(--light-text); display: flex; flex-direction: column; height: 100vh; position: fixed; }
+        .sidebar-header { padding: 20px; text-align: center; border-bottom: 1px solid #444; }
+        .sidebar-nav { flex-grow: 1; list-style: none; padding: 20px 0; margin: 0; }
+        .sidebar-nav li a { display: block; padding: 15px 20px; color: var(--light-text); text-decoration: none; }
+        .sidebar-nav li a:hover, .sidebar-nav li a.active { background-color: var(--primary-color); }
+        .sidebar-nav li a i { margin-left: 10px; }
+        .main-content { margin-right: 250px; width: calc(100% - 250px); padding: 20px; }
+        .page-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
+        .btn { padding: 10px 20px; border: none; border-radius: 5px; color: white; cursor: pointer; text-decoration: none; font-weight: 600; }
+        .btn-primary { background-color: var(--primary-color); }
+        .content-table { width: 100%; border-collapse: collapse; background: var(--card-bg); box-shadow: 0 2px 4px rgba(0,0,0,0.1); border-radius: 8px; overflow: hidden; }
+        .content-table th, .content-table td { padding: 15px; text-align: right; border-bottom: 1px solid #eee; }
+        .content-table th { background-color: #f8f9fa; }
+        .actions a, .actions button { color: #555; margin: 0 5px; background: none; border: none; cursor: pointer; font-size: 1rem; }
+        .actions a:hover { color: var(--primary-color); }
+        .actions .delete-btn:hover { color: var(--danger); }
+    </style>
+</head>
+<body>
+    <aside class="sidebar" id="sidebar-container"></aside>
+    <main class="main-content">
+        <div class="page-header">
+            <h1>إدارة الفعاليات</h1>
+            <a href="/admin/event-editor.html" class="btn btn-primary"><i class="fas fa-plus"></i> فعالية جديدة</a>
+        </div>
+        <div class="table-container">
+            <table class="content-table">
+                <thead>
+                    <tr>
+                        <th>عنوان الفعالية</th>
+                        <th>المكان</th>
+                        <th>تاريخ البدء</th>
+                        <th>تاريخ الانتهاء</th>
+                        <th>المسجلون</th>
+                        <th>إجراءات</th>
+                    </tr>
+                </thead>
+                <tbody id="events-table-body">
+                    <!-- Data will be loaded here by JavaScript -->
+                </tbody>
+            </table>
+        </div>
+    </main>
+
+    <script>
+        const token = localStorage.getItem('authToken');
+        
+        document.addEventListener('DOMContentLoaded', () => {
+            if (!token) { window.location.href = '/login'; return; }
+            loadSidebar();
+            loadEvents();
+        });
+
+        async function loadEvents() {
+            try {
+                const response = await fetch('/api/events', {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+                if (!response.ok) throw new Error('Failed to fetch events.');
+                
+                const events = await response.json();
+                const tableBody = document.getElementById('events-table-body');
+                tableBody.innerHTML = ''; 
+
+                if (events.length === 0) {
+                    tableBody.innerHTML = '<tr><td colspan="6" style="text-align: center;">لا توجد فعاليات لعرضها.</td></tr>';
+                    return;
+                }
+
+                events.forEach(event => {
+                    const row = `
+                        <tr>
+                            <td>${escapeHTML(event.title)}</td>
+                            <td>${escapeHTML(event.location)}</td>
+                            <td>${new Date(event.start_time).toLocaleString('ar-EG')}</td>
+                            <td>${new Date(event.end_time).toLocaleString('ar-EG')}</td>
+                            <td>${event.registration_count}</td>
+                            <td class="actions">
+                                <a href="/admin/event-editor.html?id=${event.id}" title="تعديل"><i class="fas fa-edit"></i></a>
+                                <button class="delete-btn" onclick="deleteEvent(${event.id})" title="حذف"><i class="fas fa-trash-alt"></i></button>
+                            </td>
+                        </tr>
+                    `;
+                    tableBody.innerHTML += row;
+                });
+            } catch (error) {
+                console.error('Error loading events:', error);
+                alert('حدث خطأ أثناء جلب الفعاليات.');
+            }
+        }
+        
+        async function deleteEvent(id) {
+            if (!confirm('هل أنت متأكد من رغبتك في حذف هذه الفعالية؟ سيتم حذف جميع التسجيلات المرتبطة بها.')) {
+                return;
+            }
+            try {
+                const response = await fetch(`/api/events/${id}`, {
+                    method: 'DELETE',
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+                const result = await response.json();
+                alert(result.message);
+                if (response.ok) {
+                    loadEvents(); // Reload the list
+                }
+            } catch (error) {
+                console.error('Error deleting event:', error);
+                alert('حدث خطأ أثناء حذف الفعالية.');
+            }
+        }
+
+        function escapeHTML(str) {
+            return str ? str.replace(/[&<>"']/g, m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'})[m]) : '';
+        }
+        
+        function loadSidebar() {
+            const sidebarContainer = document.getElementById('sidebar-container');
+            // Simplified sidebar rendering
+            sidebarContainer.innerHTML = `
+                <div class="sidebar-header">
+                    <h3>لوحة التحكم</h3>
+                </div>
+                <ul class="sidebar-nav">
+                    <li><a href="/dashboard.html"><i class="fas fa-tachometer-alt"></i> الرئيسية</a></li>
+                    <li><a href="/admin/users.html"><i class="fas fa-users"></i> إدارة المستخدمين</a></li>
+                    <li><a href="/admin/content.html"><i class="fas fa-newspaper"></i> إدارة المحتوى</a></li>
+                    <li><a href="/admin/events.html" class="active"><i class="fas fa-calendar-alt"></i> إدارة الفعاليات</a></li>
+                </ul>`;
+        }
+    </script>
+</body>
+</html>

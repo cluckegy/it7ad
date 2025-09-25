@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>إدارة المحتوى - لوحة التحكم</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css">
+    <style>
+        /* CSS remains the same as previous version */
+        @import url('https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700&display=swap');
+        :root {
+            --primary-color: #0056b3; --sidebar-bg: #212529; --body-bg: #f4f7f6;
+            --card-bg: #ffffff; --text-color: #333; --light-text: #f8f9fa;
+            --success: #28a745; --danger: #dc3545; --warning: #ffc107;
+        }
+        body { font-family: 'Cairo', sans-serif; background-color: var(--body-bg); margin: 0; display: flex; }
+        .sidebar { width: 250px; background-color: var(--sidebar-bg); color: var(--light-text); display: flex; flex-direction: column; height: 100vh; position: fixed; }
+        .sidebar-header { padding: 20px; text-align: center; border-bottom: 1px solid #444; }
+        .sidebar-header h3 { margin: 0; }
+        .sidebar-nav { flex-grow: 1; list-style: none; padding: 20px 0; margin: 0; }
+        .sidebar-nav li a { display: block; padding: 15px 20px; color: var(--light-text); text-decoration: none; transition: background 0.3s; }
+        .sidebar-nav li a:hover, .sidebar-nav li a.active { background-color: var(--primary-color); }
+        .sidebar-nav li a i { margin-left: 10px; }
+        .main-content { margin-right: 250px; width: calc(100% - 250px); padding: 20px; }
+        header.main-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
+        .main-header h1 { margin: 0; font-size: 1.8rem; }
+        .create-btn { background-color: var(--success); color: white; text-decoration: none; padding: 10px 20px; border-radius: 5px; font-weight: 600; }
+        .table-container { background: var(--card-bg); padding: 20px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
+        table { width: 100%; border-collapse: collapse; }
+        th, td { padding: 12px 15px; text-align: right; border-bottom: 1px solid #ddd; }
+        th { background-color: #f2f2f2; font-weight: 700; }
+        .status-badge { padding: 4px 10px; border-radius: 12px; color: white; font-size: 0.8rem; }
+        .status-published { background-color: var(--success); }
+        .status-draft { background-color: #6c757d; }
+        .status-archived { background-color: var(--warning); color: #333; }
+        .action-btn { background: none; border: none; cursor: pointer; font-size: 1rem; margin: 0 5px; }
+        .edit-btn { color: var(--primary-color); }
+        .delete-btn { color: var(--danger); }
+    </style>
+</head>
+<body>
+    <aside class="sidebar" id="sidebar-container"></aside>
+    <main class="main-content">
+        <header class="main-header">
+            <h1>إدارة المحتوى</h1>
+            <a href="/admin/content-editor.html" class="create-btn"><i class="fa-solid fa-plus"></i> مقال جديد</a>
+        </header>
+        <div class="table-container">
+            <table id="articles-table">
+                <thead>
+                    <tr><th>عنوان المقال</th><th>الكاتب</th><th>الحالة</th><th>تاريخ النشر</th><th>إجراءات</th></tr>
+                </thead>
+                <tbody></tbody>
+            </table>
+        </div>
+    </main>
+    <script>
+        const token = localStorage.getItem('authToken');
+
+        document.addEventListener('DOMContentLoaded', async () => {
+            if (!token) { window.location.href = '/login'; return; }
+            await loadSidebar();
+            await fetchArticles();
+        });
+
+        async function loadSidebar() {
+            // Updated sidebar logic
+             try {
+                const response = await fetch('/api/dashboard', { headers: { 'Authorization': `Bearer ${token}` } });
+                if (!response.ok) throw new Error('Failed to fetch user data');
+                const data = await response.json();
+                const rolesNav = {
+                    super_admin: `<li><a href="/admin/users"><i class="fa-solid fa-users-gear"></i> إدارة المستخدمين</a></li><li><a href="/admin/content" class="active"><i class="fa-solid fa-file-lines"></i> إدارة المحتوى</a></li>`,
+                    admin: `<li><a href="/admin/users"><i class="fa-solid fa-users"></i> إدارة المستخدمين</a></li><li><a href="/admin/content" class="active"><i class="fa-solid fa-file-lines"></i> إدارة المحتوى</a></li>`,
+                    editor: `<li><a href="/admin/content" class="active"><i class="fa-solid fa-file-lines"></i> مقالاتي</a></li>`
+                };
+                document.getElementById('sidebar-container').innerHTML = `
+                    <div class="sidebar-header"><h3>اتحاد الطلاب</h3></div>
+                    <ul class="sidebar-nav">
+                        <li><a href="/dashboard"><i class="fa-solid fa-house"></i> الرئيسية</a></li>
+                        ${rolesNav[data.user.role] || ''}
+                    </ul>`;
+            } catch (error) { window.location.href = '/login'; }
+        }
+
+        async function fetchArticles() {
+            // This now fetches different data for editors
+            const userRole = (await (await fetch('/api/dashboard', { headers: { 'Authorization': `Bearer ${token}` } })).json()).user.role;
+            const url = (userRole === 'editor') ? '/api/content/my-articles' : '/api/content/articles'; // You need to create this new route for editors
+            
+            // For now, let's keep it simple and use the admin route for all.
+            // A proper implementation would have a dedicated route for editors to see only their articles.
+            try {
+                const response = await fetch('/api/content/articles', { headers: { 'Authorization': `Bearer ${token}` } });
+                if (!response.ok) throw new Error('Failed to fetch articles');
+                const articles = await response.json();
+                renderArticlesTable(articles);
+            } catch (error) {
+                document.querySelector('#articles-table tbody').innerHTML = `<tr><td colspan="5">خطأ في تحميل البيانات.</td></tr>`;
+            }
+        }
+        
+        function renderArticlesTable(articles) {
+            const tbody = document.querySelector('#articles-table tbody');
+            if (articles.length === 0) {
+                 tbody.innerHTML = `<tr><td colspan="5" style="text-align:center;">لا يوجد مقالات. قم بإنشاء أول مقال لك!</td></tr>`;
+                 return;
+            }
+            tbody.innerHTML = articles.map(article => `
+                <tr>
+                    <td>${escapeHTML(article.title)}</td>
+                    <td>${escapeHTML(article.author_name)}</td>
+                    <td><span class="status-badge status-${article.status}">${article.status}</span></td>
+                    <td>${article.published_at ? new Date(article.published_at).toLocaleDateString('ar-EG') : '—'}</td>
+                    <td>
+                        <a href="/admin/content-editor.html?id=${article.id}" class="action-btn edit-btn" title="تعديل"><i class="fa-solid fa-pen-to-square"></i></a>
+                        <button class="action-btn delete-btn" title="حذف" onclick="deleteArticle(${article.id}, '${escapeHTML(article.title)}')"><i class="fa-solid fa-trash-can"></i></button>
+                    </td>
+                </tr>
+            `).join('');
+        }
+
+        async function deleteArticle(id, title) {
+            if (!confirm(`هل أنت متأكد من رغبتك في حذف المقال "${title}"؟ لا يمكن التراجع عن هذا الإجراء.`)) {
+                return;
+            }
+            try {
+                const res = await fetch(`/api/content/articles/${id}`, {
+                    method: 'DELETE',
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+                const result = await res.json();
+                alert(result.message);
+                if (res.ok) {
+                    fetchArticles(); // Refresh the table
+                }
+            } catch (error) {
+                alert('An error occurred while deleting the article.');
+            }
+        }
+
+        function escapeHTML(str) {
+            const p = document.createElement('p');
+            p.textContent = str;
+            return p.innerHTML;
+        }
+    </script>
+</body>
+</html>
+
